@@ -14,7 +14,7 @@ use Chiron\Http\Exception\Client\NotFoundHttpException;
 //use Chiron\Http\Psr\Response;
 use Chiron\Routing\Route;
 use Chiron\Routing\MatchingResult;
-use Chiron\Routing\RouterInterface;
+use Chiron\Routing\UrlMatcherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -24,13 +24,13 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class RoutingMiddleware implements MiddlewareInterface
 {
-    /** @var RouterInterface */
-    private $router;
+    /** @var UrlMatcherInterface */
+    private $matcher;
 
     // TODO : passer en paramétre une responsefactory et un streamfactory.
-    public function __construct(RouterInterface $router)
+    public function __construct(UrlMatcherInterface $matcher)
     {
-        $this->router = $router;
+        $this->matcher = $matcher;
     }
 
     /**
@@ -63,7 +63,7 @@ class RoutingMiddleware implements MiddlewareInterface
         // TODO : il faudrait peut etre récupérer la réponse via un $handle->handle() pour récupérer les headers de la réponse + le charset et version 1.1/1.0 pour le passer dans les exceptions (notfound+methodnotallowed) car on va recréer une nouvelle response !!!! donc si ca se trouve les headers custom genre X-Powered ou CORS vont être perdus lorsqu'on va afficher les messages custom pour l'exception 404 par exemple !!!!
 
         //$result = $this->getDispatchResult($request);
-        $result = $this->router->match($request);
+        $result = $this->matcher->match($request);
 
         // Http 405 error => Invalid Method
         if ($result->isMethodFailure()) {
@@ -78,7 +78,7 @@ class RoutingMiddleware implements MiddlewareInterface
         // TODO : faire plutot porter ces informations (method et uri utilisé) directement dans l'objet MatchingResult ??????
         //$request = $request->withAttribute('routeInfo', [$request->getMethod(), (string) $request->getUri()]);
 
-        // Store the actual route result in the request attributes, to be used/executed by the router handler.
+        // Store the actual route result in the request attributes, to be used/executed by the routing handler.
         return $request->withAttribute(MatchingResult::ATTRIBUTE, $result);
     }
 }

@@ -9,7 +9,7 @@ use Chiron\Routing\Router;
 use Chiron\Routing\RouteUrlGenerator;
 use PHPUnit\Framework\TestCase;
 
-class RouteCollectorTest extends TestCase
+class RouteCollectionTest extends TestCase
 {
     /**
      * Base path is ignored by relativeUrlFor().

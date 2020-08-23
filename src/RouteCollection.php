@@ -16,8 +16,13 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Routing\Controller\RedirectController;
 use Chiron\Routing\Controller\ViewController;
 use Chiron\Routing\Target\TargetFactory;
+use Chiron\Routing\Exception\RouteNotFoundException;
 
 use Chiron\Container\SingletonInterface;
+
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
 
 //https://github.com/fratily/router/blob/master/src/RouteCollector.php
 
@@ -61,17 +66,13 @@ use Chiron\Container\SingletonInterface;
 // TODO : créer une méthode globale nommée "base_path(): string" qui se chargerai de retourner la valeur du getBasePath() de cette classe (qu'on irait chercher via le container) ???
 
 // TODO : attention si on garde l'interface SingletonInterface il faut ajouter une dépendance sur le Container, il faudrait plutot créer une classe ServiceProvider dans ce package qui se chargerai faire un bind singleton pour la classe RouteCollector. Il faudrait surement aussi binder la classe Pipeline avec une instance initialisée avec un setFallback qui pointe sur la classe RoutingHandler
-final class RouteCollector implements SingletonInterface
+final class RouteCollection implements SingletonInterface, Countable, IteratorAggregate
 {
-    /**
-     * @var RouterInterface
-     */
-    private $router;
 
     /**
      * @var TargetFactory
      */
-    private $target;
+    private $targetFactory;
 
     /**
      * @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host)
@@ -85,10 +86,9 @@ final class RouteCollector implements SingletonInterface
      */
     private $routes = [];
 
-    public function __construct(RouterInterface $router, TargetFactory $target)
+    public function __construct(TargetFactory $targetFactory)
     {
-        $this->router = $router;
-        $this->target = $target;
+        $this->targetFactory = $targetFactory;
     }
 
     /**
@@ -114,7 +114,7 @@ final class RouteCollector implements SingletonInterface
     }
 
     /**
-     * Get a named route (proxy helper).
+     * Get a named route.
      *
      * @param string $name Route name
      *
@@ -122,19 +122,28 @@ final class RouteCollector implements SingletonInterface
      *
      * @return \Chiron\Routing\Route
      */
+    // TODO : il faudrait rajouter un contrôle sur les doublons de "name" ??? car cela peut poser soucis (notamment si on souhaite générer une url pour une route nommée) !!!!
+    // TODO : renommer la méthode en getRoute() ????
+    // TODO : passer cette méthode en private et la retirer de l'interface du router car elle n'a pas grand importance !!!! ???? et dans ce cas il faudrait aussi supprimer la classe RouteNotFoundException du package pour utiliser l'exception générique RouterException.
     public function getNamedRoute(string $name): Route
     {
-        return $this->router->getNamedRoute($name);
+        foreach ($this->getRoutes() as $route) {
+            if ($route->getName() === $name) {
+                return $route;
+            }
+        }
+
+        throw new RouteNotFoundException($name);
     }
 
     /**
-     * Get route objects (proxy helper).
+     * Get route objects.
      *
      * @return Route[]
      */
     public function getRoutes(): array
     {
-        return $this->router->getRoutes();
+        return $this->routes;
     }
 
     /**
@@ -151,8 +160,20 @@ final class RouteCollector implements SingletonInterface
         $path = rtrim($this->basePath, '/') . '/' . ltrim($path, '/');
         $route = new Route($path);
 
+        $this->addRoute($route);
+
+        return $route;
+    }
+
+    /**
+     * Add a Route to the collection, and return the route for chaining calls.
+     *
+     * @param Route $route
+     */
+    public function addRoute(Route $route): Route
+    {
+        // TODO : Lever une logica exception si on essaye d'ajouter une route, alors que que le booleen $this->isInjected est à true. Car cela n'a pas de sens d'ajouter une route aprés avoir appellé la méthode ->match de cette classe !!!!
         $this->routes[] = $route;
-        $this->router->addRoute($route);
 
         return $route;
     }
@@ -327,7 +348,7 @@ final class RouteCollector implements SingletonInterface
     // TODO : permettre de passer un UriInterface ou une string pour la destination !!!
     public function redirect(string $url, string $destination, int $status = 302): Route
     {
-        $controller = $this->target->callback([RedirectController::class, 'redirect']);
+        $controller = $this->targetFactory->callback([RedirectController::class, 'redirect']);
 
         return $this->map($url)
                 ->to($controller)
@@ -346,7 +367,7 @@ final class RouteCollector implements SingletonInterface
      */
     public function view(string $url, string $template, array $params = []): Route
     {
-        $controller = $this->target->callback([ViewController::class, 'view']);
+        $controller = $this->targetFactory->callback([ViewController::class, 'view']);
 
         return $this->map($url)
                 ->to($controller)
@@ -356,59 +377,22 @@ final class RouteCollector implements SingletonInterface
     }
 
     /**
-     * Retrieve all directly registered routes inside this collector.
+     * Get an iterator for the items.
      *
-     * @return Route[]
+     * @return \ArrayIterator
      */
-    // TODO : réfléchir si on garde cette méthode, qui ne semble pas servir à grand chose... Elle devrait plutot se trouver dans le Router car si on passe directement par le router pour ajouter une route sans passer par le collector on ne la trouvera pas dans cette liste, et lorsqu'on va ajouter la notion de group dans le collector on va passer au callback la classe collector donc cette méthode getRoutes va poluer l'objet...
-    /*
-    public function getRoutes() : array
+    public function getIterator()
     {
-        return $this->routes;
-    }*/
+        return new ArrayIterator($this->getRoutes());
+    }
 
     /**
-     * Determine if the route is duplicated in the current list.
+     * Count the number of items in the collection.
      *
-     * Checks if a route with the same name or path exists already in the list;
-     * if so, and it responds to any of the $methods indicated, raises
-     * a DuplicateRouteException indicating a duplicate route.
-     *
-     * @throws Exception\DuplicateRouteException on duplicate route detection.
+     * @return int
      */
-    // TODO : méthode à virer
-    /*
-    private function checkForDuplicateRoute(string $path, array $methods = null) : void
+    public function count()
     {
-        if (null === $methods) {
-            $methods = Route::HTTP_METHOD_ANY;
-        }
-
-        $matches = array_filter($this->routes, function (Route $route) use ($path, $methods) {
-            if ($path !== $route->getPath()) {
-                return false;
-            }
-
-            if ($methods === Route::HTTP_METHOD_ANY) {
-                return true;
-            }
-
-            return array_reduce($methods, function ($carry, $method) use ($route) {
-                return ($carry || $route->allowsMethod($method));
-            }, false);
-        });
-
-        if (! empty($matches)) {
-            $match = reset($matches);
-            $allowedMethods = $match->getAllowedMethods() ?: ['(any)'];
-            $name = $match->getName();
-            throw new Exception\DuplicateRouteException(sprintf(
-                'Duplicate route detected; path "%s" answering to methods [%s]%s',
-                $match->getPath(),
-                implode(',', $allowedMethods),
-                $name ? sprintf(', with name "%s"', $name) : ''
-            ));
-        }
-    }*/
-
+        return count($this->getRoutes());
+    }
 }

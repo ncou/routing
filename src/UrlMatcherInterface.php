@@ -6,7 +6,7 @@ namespace Chiron\Routing;
 
 use Psr\Http\Message\ServerRequestInterface;
 
-interface RouterInterface
+interface UrlMatcherInterface
 {
 
     /**
@@ -27,7 +27,7 @@ interface RouterInterface
      *
      * @return MatchingResult
      */
-    public function addRoute(Route $route): Route;
+    //public function addRoute(Route $route): Route;
 
     /**
      * Get a named route.
@@ -38,14 +38,14 @@ interface RouterInterface
      *
      * @return \Chiron\Router\Route
      */
-    public function getNamedRoute(string $name): Route;
+    //public function getNamedRoute(string $name): Route;
 
     /**
      * Get route objects.
      *
      * @return Route[]
      */
-    public function getRoutes(): array;
+    //public function getRoutes(): array;
 
     /**
      * Set the base path for each Route.

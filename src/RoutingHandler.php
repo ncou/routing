@@ -11,11 +11,11 @@ use Chiron\Routing\Middleware\RoutingMiddleware;
 
 class RoutingHandler implements RequestHandlerInterface
 {
-    /** @var RouterInterface */
-    private $router;
+    /** @var UrlMatcherInterface */
+    private $matcher;
 
-    public function __construct(RouterInterface $router) {
-        $this->router = $router;
+    public function __construct(UrlMatcherInterface $matcher) {
+        $this->matcher = $matcher;
     }
 
     /**
@@ -36,7 +36,7 @@ class RoutingHandler implements RequestHandlerInterface
     {
         // If routing hasn't been done, then do it now so we can dispatch
         if ($request->getAttribute(MatchingResult::ATTRIBUTE) === null) {
-            $routingMiddleware = new RoutingMiddleware($this->router);
+            $routingMiddleware = new RoutingMiddleware($this->matcher);
             $request = $routingMiddleware->performRouting($request);
         }
 
