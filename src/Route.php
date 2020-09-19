@@ -136,6 +136,7 @@ class Route implements MiddlewareAwareInterface
     // TODO : gérer le cas ou l'utilisateur n'appel pas cette méthode et donc que le $this->handler est null, car on aura un typeerror quand on va récupérer la valeur via le getteur getHandler() qui doit retourner un objet de type ServerRequestHandlerInterface !!!!!!!!!!!!
     public function to(RequestHandlerInterface $handler): self
     {
+        // TODO : on devrait pas plutot déporter ce bout de code dans la classe UrlMatcher lorsqu'on inject les routes ? car je pense qu'il y a un risque que l'ajout de valeurs par default ou de requirements ne perturbent la génération du lien pour l'url lorsqu'on utilisera la classe UrlGenerator.
         if ($handler instanceof TargetInterface) {
         //if (is_subclass_of($handler, TargetInterface::class)) {
             $this->addDefaults($handler->getDefaults());

@@ -41,7 +41,9 @@ final class ViewController
 
         // TODO : déporter le code de création de la réponse dans une méthode privée "createResponse(string $body): ResponseInterface" qui se chargera d'effectuer les 3 lignes ci dessous.
         $response = $this->factory->createResponse();
-        // TODO : vérifier si il n'y a pas déjà un header content-type avant d'ajouter celui là.
+        // TODO : vérifier si il n'y a pas déjà un header content-type avant d'ajouter celui là. https://github.com/zendframework/zend-diactoros/blob/master/src/Response/InjectContentTypeTrait.php  +   https://github.com/zendframework/zend-diactoros/blob/master/src/Response/HtmlResponse.php#L50
+        // https://github.com/laminas/laminas-diactoros/blob/2.5.x/src/Response/InjectContentTypeTrait.php
+        // https://github.com/laminas/laminas-diactoros/blob/2.5.x/src/Response/HtmlResponse.php#L51
         $response = $response->withHeader('Content-Type', 'text/html');
 
         $response->getBody()->write($content);

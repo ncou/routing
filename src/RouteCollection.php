@@ -24,6 +24,8 @@ use ArrayIterator;
 use Countable;
 use IteratorAggregate;
 
+// Group / Prefix : https://github.com/mrjgreen/phroute/blob/master/src/Phroute/RouteCollector.php#L185
+
 //https://github.com/fratily/router/blob/master/src/RouteCollector.php
 
 // GROUP
@@ -77,7 +79,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
     /**
      * @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host)
      */
-    private $basePath;
+    private $basePath = '/';
 
     /**
      * List of all routes registered directly with the application.

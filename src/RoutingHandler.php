@@ -14,7 +14,8 @@ class RoutingHandler implements RequestHandlerInterface
     /** @var UrlMatcherInterface */
     private $matcher;
 
-    public function __construct(UrlMatcherInterface $matcher) {
+    public function __construct(UrlMatcherInterface $matcher)
+    {
         $this->matcher = $matcher;
     }
 
@@ -34,8 +35,7 @@ class RoutingHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // If routing hasn't been done, then do it now so we can dispatch
-        if ($request->getAttribute(MatchingResult::ATTRIBUTE) === null) {
+        if (! $this->isRoutingPerformed($request)) {
             $routingMiddleware = new RoutingMiddleware($this->matcher);
             $request = $routingMiddleware->performRouting($request);
         }
@@ -45,4 +45,16 @@ class RoutingHandler implements RequestHandlerInterface
         return $result->handle($request);
     }
 
+    /**
+     * If the attribute MatchingResult::ATTRIBUTE is not presents this mean the
+     * routing middleware hasn't been called (not present in the middleware stack).
+     *
+     * @param ServerRequestInterface $request
+     *
+     * @return bool
+     */
+    private function isRoutingPerformed(ServerRequestInterface $request): bool
+    {
+        return $request->getAttribute(MatchingResult::ATTRIBUTE) !== null;
+    }
 }

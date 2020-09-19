@@ -18,49 +18,6 @@ interface UrlMatcherInterface
      *
      * @throws Exception\RouterException If an internal problem occured
      */
+    // TODO : voir si on garde le tag @throw dans la phpdoc.
     public function match(ServerRequestInterface $request): MatchingResult;
-
-    /**
-     * Add a Route to the collection, and return the route for chaining calls.
-     *
-     * @param Route $route
-     *
-     * @return MatchingResult
-     */
-    //public function addRoute(Route $route): Route;
-
-    /**
-     * Get a named route.
-     *
-     * @param string $name Route name
-     *
-     * @throws Exception\RouteNotFoundException If named route does not exist
-     *
-     * @return \Chiron\Router\Route
-     */
-    //public function getNamedRoute(string $name): Route;
-
-    /**
-     * Get route objects.
-     *
-     * @return Route[]
-     */
-    //public function getRoutes(): array;
-
-    /**
-     * Set the base path for each Route.
-     * Useful if you are running your application from a subdirectory.
-     */
-    //public function setBasePath(string $basePath): void;
-
-    /**
-     * Get the router base path.
-     */
-    //public function getBasePath(): string;
-
-    // TODO : réflaichir si on doit ajouter la méthode : addGroup dans cette interface.
-    // TODO : réflaichir si on doit ajouter la méthode : generateUri dans cette interface.
-    // TODO : réflaichir si on doit ajouter la méthode : getRoutes dans cette interface.
-    // TODO : réflaichir si on doit ajouter la méthode : getNamedRoute(string $name) ou en plus court getRoute(string $name) dans cette interface.
-    // TODO : réflaichir si on doit ajouter la méthode : removeNamedRoute dans cette interface.
 }

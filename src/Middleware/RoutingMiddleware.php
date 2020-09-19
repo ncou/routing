@@ -27,7 +27,6 @@ class RoutingMiddleware implements MiddlewareInterface
     /** @var UrlMatcherInterface */
     private $matcher;
 
-    // TODO : passer en paramétre une responsefactory et un streamfactory.
     public function __construct(UrlMatcherInterface $matcher)
     {
         $this->matcher = $matcher;
@@ -36,6 +35,7 @@ class RoutingMiddleware implements MiddlewareInterface
     /**
      * @param ServerRequestInterface  $request
      * @param RequestHandlerInterface $handler
+     *
      * @return ResponseInterface
      *
      * @throws NotFoundHttpException
@@ -45,7 +45,6 @@ class RoutingMiddleware implements MiddlewareInterface
     {
         $request = $this->performRouting($request);
 
-        // Execute the next handler
         return $handler->handle($request);
     }
 
@@ -62,7 +61,6 @@ class RoutingMiddleware implements MiddlewareInterface
     {
         // TODO : il faudrait peut etre récupérer la réponse via un $handle->handle() pour récupérer les headers de la réponse + le charset et version 1.1/1.0 pour le passer dans les exceptions (notfound+methodnotallowed) car on va recréer une nouvelle response !!!! donc si ca se trouve les headers custom genre X-Powered ou CORS vont être perdus lorsqu'on va afficher les messages custom pour l'exception 404 par exemple !!!!
 
-        //$result = $this->getDispatchResult($request);
         $result = $this->matcher->match($request);
 
         // Http 405 error => Invalid Method
@@ -76,7 +74,7 @@ class RoutingMiddleware implements MiddlewareInterface
 
         // add some usefull information about the url used for the routing
         // TODO : faire plutot porter ces informations (method et uri utilisé) directement dans l'objet MatchingResult ??????
-        //$request = $request->withAttribute('routeInfo', [$request->getMethod(), (string) $request->getUri()]);
+        //$request = $request->withAttribute('routeInfo', [$request->getMethod(), (string) $request->getUri()]);  // ou alors ne stocker que le path ??? cad utiliser $request->getUri()->getPath()
 
         // Store the actual route result in the request attributes, to be used/executed by the routing handler.
         return $request->withAttribute(MatchingResult::ATTRIBUTE, $result);

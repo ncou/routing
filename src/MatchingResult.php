@@ -211,7 +211,7 @@ class MatchingResult implements RequestHandlerInterface
         return $this->allowedMethods;
     }
 
-    // TODO : lever une execption si on execute ce bout de code sans que le résultat soit à "isSuccess === true"
+    // TODO : lever une exception si on execute ce bout de code sans que le résultat soit à "isSuccess === true"
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         // Merge the default values defined in the Route with the parameters, and add the request class name used to resole the callable parameters using type hint.

@@ -54,7 +54,10 @@
             "dev-master": "1.0-dev"
         },
         "chiron": {
-            "bootloaders": ["Chiron\\Routing\\Bootloader\\RouteCollectionBootloader"]
+            "bootloaders": [
+                "Chiron\\Routing\\Bootloader\\RouteCollectionBootloader",
+                "Chiron\\Routing\\Bootloader\\RoutingCommandBootloader"
+            ]
         }
     },
     "config": {
