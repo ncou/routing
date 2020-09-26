@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
+use Chiron\Http\Message\RequestMethod;
 use Chiron\Routing\Target\TargetInterface;
 use Chiron\Routing\Traits\MiddlewareAwareInterface;
 use Chiron\Routing\Traits\MiddlewareAwareTrait;
@@ -72,8 +73,7 @@ class Route implements MiddlewareAwareInterface
      */
     // Créer une RouteInterface et ajouter ces verbs dans l'interface : https://github.com/spiral/router/blob/master/src/RouteInterface.php#L26
     // TODO : cette initialisation ne semble pas nécessaire !!!!
-    // TODO : utiliser directement la constante Method::ANY
-    private $methods = Method::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
+    private $methods = RequestMethod::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
 
 
     public function __construct(string $path)
@@ -85,39 +85,39 @@ class Route implements MiddlewareAwareInterface
 
     public static function get(string $path): self
     {
-        return self::map($path, [Method::GET]);
+        return self::map($path, [RequestMethod::GET]);
     }
     public static function post(string $path): self
     {
-        return self::map($path, [Method::POST]);
+        return self::map($path, [RequestMethod::POST]);
     }
     public static function put(string $path): self
     {
-        return self::map($path, [Method::PUT]);
+        return self::map($path, [RequestMethod::PUT]);
     }
     public static function delete(string $path): self
     {
-        return self::map($path, [Method::DELETE]);
+        return self::map($path, [RequestMethod::DELETE]);
     }
     public static function patch(string $path): self
     {
-        return self::map($path, [Method::PATCH]);
+        return self::map($path, [RequestMethod::PATCH]);
     }
     public static function head(string $path): self
     {
-        return self::map($path, [Method::HEAD]);
+        return self::map($path, [RequestMethod::HEAD]);
     }
     public static function options(string $path): self
     {
-        return self::map($path, [Method::OPTIONS]);
+        return self::map($path, [RequestMethod::OPTIONS]);
     }
     public static function trace(string $path): self
     {
-        return self::map($path, [Method::TRACE]);
+        return self::map($path, [RequestMethod::TRACE]);
     }
     public static function any(string $path): self
     {
-        return self::map($path, Method::ANY);
+        return self::map($path, RequestMethod::ANY);
     }
     public static function map(string $path, array $methods): self
     {
@@ -423,7 +423,7 @@ class Route implements MiddlewareAwareInterface
             );
         }
 
-        $this->methods = Method::validateHttpMethods($methods);
+        $this->methods = RequestMethod::validateHttpMethods($methods);
 
         return $this;
     }

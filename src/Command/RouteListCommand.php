@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Chiron\Routing\Command;
 
 use Chiron\Console\AbstractCommand;
-use Chiron\Routing\Method;
+use Chiron\Http\Message\RequestMethod;
 use Chiron\Routing\Route;
 use Chiron\Routing\RouteCollection;
 use Chiron\Routing\Target\Action;
@@ -97,7 +97,7 @@ final class RouteListCommand extends AbstractCommand
      */
     private function getAllowedMethods(Route $route): string
     {
-        if ($route->getAllowedMethods() === Method::ANY) {
+        if ($route->getAllowedMethods() === RequestMethod::ANY) {
             return '*';
         }
 
