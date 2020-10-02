@@ -7,6 +7,7 @@ namespace Chiron\Routing;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Chiron\Http\Message\RequestMethod;
 
 // TODO : regarder ici : https://github.com/l0gicgate/Slim/blob/4.x-DispatcherResults/Slim/DispatcherResults.php
 //https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/RoutingResults.php
@@ -127,7 +128,7 @@ class MatchingResult implements RequestHandlerInterface
      */
     public function isMethodFailure(): bool
     {
-        return $this->isFailure() && $this->allowedMethods !== Method::ANY;
+        return $this->isFailure() && $this->allowedMethods !== RequestMethod::ANY;
     }
 
     /**
