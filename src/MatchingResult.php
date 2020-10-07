@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Http\Message\RequestMethod;
+use Chiron\Pipe\Pipeline;
 
 // TODO : regarder ici : https://github.com/l0gicgate/Slim/blob/4.x-DispatcherResults/Slim/DispatcherResults.php
 //https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/RoutingResults.php
@@ -224,7 +225,7 @@ class MatchingResult implements RequestHandlerInterface
             $request = $request->withAttribute($param, $value);
         }
 
-        $handler = new RequestHandler();
+        $handler = new Pipeline();
 
         foreach ($this->route->getMiddlewareStack() as $middleware) {
             $handler->pipe($middleware);
