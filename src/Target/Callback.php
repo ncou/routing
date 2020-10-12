@@ -12,6 +12,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Injector\Injector;
 
 // TODO : améliorer le code avec cet exemple : https://github.com/spiral/framework/blob/master/src/Router/src/CoreHandler.php#L104
+//https://github.com/middlewares/utils/blob/master/src/CallableHandler.php#L59
 
 // TODO : mieux gérer les exceptions dans le cas ou il y a une erreur lors du $injector->call()    exemple :   https://github.com/spiral/framework/blob/e63b9218501ce882e661acac284b7167b79da30a/src/Hmvc/src/AbstractCore.php#L67       +         https://github.com/spiral/framework/blob/master/src/Router/src/CoreHandler.php#L199
 
