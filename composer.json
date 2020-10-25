@@ -58,7 +58,8 @@
         "chiron": {
             "bootloaders": [
                 "Chiron\\Routing\\Bootloader\\RouteCollectionBootloader",
-                "Chiron\\Routing\\Bootloader\\RoutingCommandBootloader"
+                "Chiron\\Routing\\Bootloader\\RoutingCommandBootloader",
+                "Chiron\\Routing\\Bootloader\\RoutingHandlerBootloader"
             ]
         }
     },

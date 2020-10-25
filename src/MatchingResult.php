@@ -225,17 +225,11 @@ class MatchingResult implements RequestHandlerInterface
             $request = $request->withAttribute($param, $value);
         }
 
-        $handler = new Pipeline();
+        $pipeline = new Pipeline(
+            $this->route->getMiddlewareStack(),
+            $this->route->getHandler()
+        );
 
-        foreach ($this->route->getMiddlewareStack() as $middleware) {
-            $handler->pipe($middleware);
-        }
-
-        // the fallback handler could be null if the last middleware attached to the route return a response.
-        if ($this->route->getHandler() !== null) {
-            $handler->setFallback($this->route->getHandler());
-        }
-
-        return $handler->handle($request);
+        return $pipeline->handle($request);
     }
 }
