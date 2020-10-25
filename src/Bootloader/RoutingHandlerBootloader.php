@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Bootloader;
 
-use Chiron\Bootload\AbstractBootloader;
+use Chiron\Core\Container\Bootloader\AbstractBootloader;
 use Chiron\Http\MiddlewareQueue;
 use Psr\Container\ContainerInterface;
 use Chiron\Routing\RoutingHandler;

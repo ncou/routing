@@ -2,7 +2,7 @@
 
 namespace Chiron\Routing\Bootloader;
 
-use Chiron\Bootload\AbstractBootloader;
+use Chiron\Core\Container\Bootloader\AbstractBootloader;
 use Chiron\Http\Config\HttpConfig;
 use Chiron\Routing\RouteCollection;
 

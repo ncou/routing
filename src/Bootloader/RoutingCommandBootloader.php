@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Bootloader;
 
-use Chiron\Bootload\AbstractBootloader;
+use Chiron\Core\Container\Bootloader\AbstractBootloader;
 use Chiron\Console\Console;
 use Chiron\Routing\Command\RouteListCommand;
 use Chiron\Routing\Command\ServeCommand;
