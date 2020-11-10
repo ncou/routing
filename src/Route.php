@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
-use Chiron\Http\Message\RequestMethod;
+use Chiron\Http\Message\RequestMethod as Method;
 use Chiron\Routing\Target\TargetInterface;
 use Chiron\Routing\Traits\MiddlewareAwareInterface;
 use Chiron\Routing\Traits\MiddlewareAwareTrait;
@@ -12,6 +12,18 @@ use Chiron\Routing\Traits\RouteConditionHandlerInterface;
 use Chiron\Routing\Traits\RouteConditionHandlerTrait;
 use Psr\Http\Server\RequestHandlerInterface;
 use InvalidArgumentException;
+use Chiron\Container\Container;
+use Chiron\Pipeline\Pipeline;
+use Chiron\Container\ContainerAwareInterface;
+use Chiron\Container\ContainerAwareTrait;
+use Chiron\Routing\Exception\RouteException;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+
+use Chiron\Pipeline\PipelineTrait;
+
 
 //https://github.com/symfony/routing/blob/master/Route.php
 
@@ -23,10 +35,15 @@ use InvalidArgumentException;
 // TODO : remplacer le terme Alias dans les commentaires par Proxy
 // TODO : passer la classe en final et virer les champs protected
 // TODO : utiliser le point d'interrogation et ?null pour initialiser certaines variables   => https://github.com/yiisoft/router/blob/master/src/Route.php#L19 pour fonctionner en version 7.4 !!!!
-class Route implements MiddlewareAwareInterface
+class Route implements RequestHandlerInterface, ContainerAwareInterface
 {
-    // TODO : virer la classe MiddlewareAwareTrait et lister les méthodes middleware() / getStackMiddleware() dans l'interface.
-    use MiddlewareAwareTrait;
+    use ContainerAwareTrait;
+    use PipelineTrait;
+
+    /**
+     * @var string
+     */
+    public const ATTRIBUTE = '__Route__';
 
     /**
      * @var string|null
@@ -59,12 +76,7 @@ class Route implements MiddlewareAwareInterface
      */
     private $path;
 
-    /**
-     * Handler assigned to be executed when route is matched.
-     *
-     * @var RequestHandlerInterface
-     */
-    private $handler;
+    private $target;
 
     /**
      * List of supported HTTP methods for this route (GET, POST etc.).
@@ -73,8 +85,7 @@ class Route implements MiddlewareAwareInterface
      */
     // Créer une RouteInterface et ajouter ces verbs dans l'interface : https://github.com/spiral/router/blob/master/src/RouteInterface.php#L26
     // TODO : cette initialisation ne semble pas nécessaire !!!!
-    private $methods = RequestMethod::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
-
+    private $methods = Method::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
 
     public function __construct(string $path)
     {
@@ -85,39 +96,39 @@ class Route implements MiddlewareAwareInterface
 
     public static function get(string $path): self
     {
-        return self::map($path, [RequestMethod::GET]);
+        return self::map($path, [Method::GET]);
     }
     public static function post(string $path): self
     {
-        return self::map($path, [RequestMethod::POST]);
+        return self::map($path, [Method::POST]);
     }
     public static function put(string $path): self
     {
-        return self::map($path, [RequestMethod::PUT]);
+        return self::map($path, [Method::PUT]);
     }
     public static function delete(string $path): self
     {
-        return self::map($path, [RequestMethod::DELETE]);
+        return self::map($path, [Method::DELETE]);
     }
     public static function patch(string $path): self
     {
-        return self::map($path, [RequestMethod::PATCH]);
+        return self::map($path, [Method::PATCH]);
     }
     public static function head(string $path): self
     {
-        return self::map($path, [RequestMethod::HEAD]);
+        return self::map($path, [Method::HEAD]);
     }
     public static function options(string $path): self
     {
-        return self::map($path, [RequestMethod::OPTIONS]);
+        return self::map($path, [Method::OPTIONS]);
     }
     public static function trace(string $path): self
     {
-        return self::map($path, [RequestMethod::TRACE]);
+        return self::map($path, [Method::TRACE]);
     }
     public static function any(string $path): self
     {
-        return self::map($path, RequestMethod::ANY);
+        return self::map($path, Method::ANY);
     }
     public static function map(string $path, array $methods): self
     {
@@ -134,25 +145,29 @@ class Route implements MiddlewareAwareInterface
      * @return Route
      */
     // TODO : gérer le cas ou l'utilisateur n'appel pas cette méthode et donc que le $this->handler est null, car on aura un typeerror quand on va récupérer la valeur via le getteur getHandler() qui doit retourner un objet de type ServerRequestHandlerInterface !!!!!!!!!!!!
-    public function to(RequestHandlerInterface $handler): self
+    public function to($target): self
     {
+        $this->target = $target;
+
+        // Resolve the handler if the container is presents, else the resolution will be done later.
+        if ($this->hasContainer()) {
+            $this->prepareHandler($target);
+        }
+
+        return $this;
+    }
+
+    private function prepareHandler($target): void
+    {
+        $handler = $this->resolveHandler($target);
+
         // TODO : on devrait pas plutot déporter ce bout de code dans la classe UrlMatcher lorsqu'on inject les routes ? car je pense qu'il y a un risque que l'ajout de valeurs par default ou de requirements ne perturbent la génération du lien pour l'url lorsqu'on utilisera la classe UrlGenerator.
         if ($handler instanceof TargetInterface) {
-        //if (is_subclass_of($handler, TargetInterface::class)) {
             $this->addDefaults($handler->getDefaults());
             $this->addRequirements($handler->getRequirements());
         }
 
         $this->handler = $handler;
-
-        return $this;
-    }
-
-
-    // return : null|RequestHandlerInterface The return null arrive only if the ->to() function hasn't been called (in case the user want to use the last middleware as a response creator)
-    public function getHandler(): ?RequestHandlerInterface
-    {
-        return $this->handler;
     }
 
     public function getPath(): string
@@ -423,7 +438,7 @@ class Route implements MiddlewareAwareInterface
             );
         }
 
-        $this->methods = RequestMethod::validateHttpMethods($methods);
+        $this->methods = Method::validateHttpMethods($methods);
 
         return $this;
     }
@@ -593,5 +608,62 @@ class Route implements MiddlewareAwareInterface
     public function port(int $port): self
     {
         return $this->setPort($port);
+    }
+
+    /**
+     * Add a middleware to the end of the stack.
+     *
+     * @param string|MiddlewareInterface or an array of such arguments $middlewares
+     *
+     * @return $this (for chaining)
+     */
+    // TODO : gérer aussi les tableaux de middleware, ainsi que les tableaux de tableaux de middlewares
+    public function middleware($middleware): self
+    {
+        // Resolve the middleware if the container is presents, else the resolution will be done later.
+        if ($this->hasContainer()) {
+            $middleware = $this->resolveMiddleware($middleware);
+        }
+
+        $this->middlewares[] = $middleware;
+
+        return $this;
+    }
+
+    // TODO : faire une sorte de extend du ContainerAwareTrait !!!! plutot que de faire cette redéfinition de la méthode ci dessous !!!
+    public function setContainer(Container $container): ContainerAwareInterface
+    {
+        $this->container = $container;
+
+        // Resolve the middlewares already added, exception is thrown on resolution fail.
+        foreach ($this->middlewares as &$middleware) {
+            $middleware = $this->resolveMiddleware($middleware);
+        }
+
+        // Resolve the handler only if already set, exception is thrown on resolution fail.
+        if ($this->target !== null) {
+            $this->prepareHandler($this->target);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Execute the route using a pipeline (send request throw middlewares and final handler).
+     *
+     * Add the the route attribute to the request in case user need it in final handler.
+     * And bind a fresh request in the container.
+     *
+     * @param ServerRequestInterface $request
+     *
+     * @return ResponseInterface
+     */
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        if (! $this->hasContainer()) {
+            throw new RouteException('Unable to configure route pipeline without associated container.');
+        }
+
+        return $this->getPipeline()->handle($request->withAttribute(self::ATTRIBUTE, $this));
     }
 }

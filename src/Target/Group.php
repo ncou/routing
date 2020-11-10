@@ -11,6 +11,9 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Injector\Injector;
 
+use Chiron\Container\Container;
+use Chiron\Pipeline\CallableHandler;
+
 /**
  * Provides ability to invoke from a given controller set:
  *
@@ -18,20 +21,16 @@ use Chiron\Injector\Injector;
  * new Group(['signup' => SignUpController::class]);
  * ```
  */
-final class Group implements RequestHandlerInterface
+final class Group extends CallableHandler implements TargetInterface
 {
-    /** @var ContainerInterface */
-    private $container;
     /** @var array */
     private $controllers;
 
     /**
-     * @param ContainerInterface $container
      * @param array $controllers
      */
-    public function __construct(ContainerInterface $container, array $controllers)
+    public function __construct(array $controllers)
     {
-        $this->container = $container;
         $this->controllers = $controllers;
     }
 
@@ -39,26 +38,23 @@ final class Group implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $controllerName = $request->getAttribute('controller');
-
         if ($controllerName === null) {
+            // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new \RuntimeException('Request does not contain controller attribute.');
         }
 
+        // TODO : on devrait pas vérifier via un isset que l'élément du tableau $this->controllers[xxx] existe bien ????
         $controller = $this->controllers[$controllerName];
 
         $action = $request->getAttribute('action');
         if ($action === null) {
+            // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new \RuntimeException('Request does not contain action attribute.');
         }
 
-        /*
-        if (!method_exists($controller, $action)) {
-            // TODO : utiliser une exception HTTP ici ???
-            throw new \RuntimeException('Bad Request.');
-            //return $handler->handle($request);
-        }*/
+        $this->callable = [$controller, $action];
 
-        return (new Injector($this->container))->call([$controller, $action], [$request]);
+        return parent::handle($request);
     }
 
     public function getDefaults(): array
@@ -68,6 +64,6 @@ final class Group implements RequestHandlerInterface
 
     public function getRequirements(): array
     {
-        return ['controller' => join('|', array_keys($controllers)), 'action' => null];
+        return ['controller' => join('|', array_keys($this->controllers))];
     }
 }

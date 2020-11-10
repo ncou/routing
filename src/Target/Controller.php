@@ -11,6 +11,9 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Injector\Injector;
 
+use Chiron\Container\Container;
+use Chiron\Pipeline\CallableHandler;
+
 /**
  * Targets to all actions in specific controller. Variation of Action without action constrain.
  *
@@ -18,40 +21,30 @@ use Chiron\Injector\Injector;
  * new Controller(HomeController::class);
  * ```
  */
-final class Controller implements RequestHandlerInterface
+final class Controller extends CallableHandler implements TargetInterface
 {
-    /** @var ContainerInterface */
-    private $container;
     /** @var string */
     private $controller;
 
     /**
-     * @param ContainerInterface $container
      * @param string $controller
      */
-    public function __construct(ContainerInterface $container, string $controller)
+    public function __construct(string $controller)
     {
-        $this->container = $container;
         $this->controller = $controller;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        //$controller = $this->container->get($this->controller);
-
+        // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
         $action = $request->getAttribute('action');
         if ($action === null) {
             throw new \RuntimeException('Request does not contain action attribute.');
         }
 
-        /*
-        if (!method_exists($controller, $action)) {
-            // TODO : utiliser une exception HTTP ici ???
-            throw new \RuntimeException('Bad Request.');
-            //return $handler->handle($request);
-        }*/
+        $this->callable = [$this->controller, $action];
 
-        return (new Injector($this->container))->call([$this->controller, $action], [$request]);
+        return parent::handle($request);
     }
 
     public function getDefaults(): array
@@ -61,6 +54,6 @@ final class Controller implements RequestHandlerInterface
 
     public function getRequirements(): array
     {
-        return ['action' => null];
+        return [];
     }
 }

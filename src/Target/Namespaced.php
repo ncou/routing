@@ -10,6 +10,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Injector\Injector;
+use Chiron\Container\Container;
+use Chiron\Pipeline\CallableHandler;
 
 /**
  * Provides ability to invoke any controller from given namespace.
@@ -18,23 +20,20 @@ use Chiron\Injector\Injector;
  * new Namespaced("App\Controllers");
  * ```
  */
-final class Namespaced implements RequestHandlerInterface
+final class Namespaced extends CallableHandler implements TargetInterface
 {
-    /** @var ContainerInterface */
-    private $container;
     /** @var string */
     private $namespace;
     /** @var string */
     private $postfix;
 
     /**
-     * @param ContainerInterface $container
+     * @param Container $container
      * @param string $namespace
      * @param string $postfix
      */
-    public function __construct(ContainerInterface $container, string $namespace, string $postfix = 'Controller')
+    public function __construct(string $namespace, string $postfix = 'Controller')
     {
-        $this->container = $container;
         $this->namespace = rtrim($namespace, '\\');
         $this->postfix = ucfirst($postfix);
     }
@@ -44,6 +43,7 @@ final class Namespaced implements RequestHandlerInterface
         $controllerName = $request->getAttribute('controller');
 
         if ($controllerName === null) {
+            // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new \RuntimeException('Request does not contain controller attribute.');
         }
 
@@ -54,21 +54,23 @@ final class Namespaced implements RequestHandlerInterface
             $this->postfix
         );
 
-        //$controller = $this->container->get($class);
-
         $action = $request->getAttribute('action');
         if ($action === null) {
+            // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new \RuntimeException('Request does not contain action attribute.');
         }
 
-/*
-        if (!method_exists($controller, $action)) {
-            // TODO : utiliser une exception HTTP ici ???
-            throw new \RuntimeException('Bad Request.');
-            //return $handler->handle($request);
-        }*/
+        $this->callable = [$class, $action];
 
-        return (new Injector($this->container))->call([$class, $action], [$request]);
+        return parent::handle($request);
+    }
+
+    /**
+     * Converts a word into the format for a Doctrine class name. Converts 'table_name' to 'TableName'.
+     */
+    private function classify(string $word) : string
+    {
+        return str_replace([' ', '_', '-'], '', ucwords($word, ' _-'));
     }
 
     public function getDefaults(): array
@@ -78,14 +80,6 @@ final class Namespaced implements RequestHandlerInterface
 
     public function getRequirements(): array
     {
-        return ['controller' => null, 'action' => null];
-    }
-
-    /**
-     * Converts a word into the format for a Doctrine class name. Converts 'table_name' to 'TableName'.
-     */
-    private function classify(string $word) : string
-    {
-        return str_replace([' ', '_', '-'], '', ucwords($word, ' _-'));
+        return [];
     }
 }

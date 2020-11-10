@@ -19,6 +19,9 @@ use Chiron\Routing\Target\TargetFactory;
 use Chiron\Routing\Exception\RouteNotFoundException;
 
 use Chiron\Container\SingletonInterface;
+use Chiron\Container\Container;
+
+use Chiron\Pipeline\CallableHandler;
 
 use ArrayIterator;
 use Countable;
@@ -70,12 +73,6 @@ use IteratorAggregate;
 // TODO : attention si on garde l'interface SingletonInterface il faut ajouter une dépendance sur le Container, il faudrait plutot créer une classe ServiceProvider dans ce package qui se chargerai faire un bind singleton pour la classe RouteCollector. Il faudrait surement aussi binder la classe Pipeline avec une instance initialisée avec un setFallback qui pointe sur la classe RoutingHandler
 final class RouteCollection implements SingletonInterface, Countable, IteratorAggregate
 {
-
-    /**
-     * @var TargetFactory
-     */
-    private $targetFactory;
-
     /**
      * @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host)
      */
@@ -88,9 +85,12 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      */
     private $routes = [];
 
-    public function __construct(TargetFactory $targetFactory)
+    /** @var Container */
+    private $container;
+
+    public function __construct(Container $container)
     {
-        $this->targetFactory = $targetFactory;
+        $this->container = $container;
     }
 
     /**
@@ -174,7 +174,9 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      */
     public function addRoute(Route $route): Route
     {
-        // TODO : Lever une logica exception si on essaye d'ajouter une route, alors que que le booleen $this->isInjected est à true. Car cela n'a pas de sens d'ajouter une route aprés avoir appellé la méthode ->match de cette classe !!!!
+        $route->setContainer($this->container);
+
+        // TODO : Lever une LogicException si on essaye d'ajouter une route, alors que que le booleen $this->isInjected est à true. Car cela n'a pas de sens d'ajouter une route aprés avoir appellé la méthode ->match de cette classe !!!!
         $this->routes[] = $route;
 
         return $route;
@@ -350,7 +352,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
     // TODO : permettre de passer un UriInterface ou une string pour la destination !!!
     public function redirect(string $url, string $destination, int $status = 302): Route
     {
-        $controller = $this->targetFactory->callback([RedirectController::class, 'redirect']);
+        $controller = new CallableHandler([RedirectController::class, 'redirect']);
 
         return $this->map($url)
                 ->to($controller)
@@ -369,7 +371,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      */
     public function view(string $url, string $template, array $params = []): Route
     {
-        $controller = $this->targetFactory->callback([ViewController::class, 'view']);
+        $controller = new CallableHandler([ViewController::class, 'view']);
 
         return $this->map($url)
                 ->to($controller)
@@ -385,7 +387,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      */
     public function getIterator()
     {
-        return new ArrayIterator($this->getRoutes());
+        return new ArrayIterator($this->routes);
     }
 
     /**
@@ -395,6 +397,6 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      */
     public function count()
     {
-        return count($this->getRoutes());
+        return count($this->routes);
     }
 }

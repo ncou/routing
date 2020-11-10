@@ -6,13 +6,15 @@ namespace Chiron\Routing;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Http\Message\RequestMethod;
-use Chiron\Pipe\Pipeline;
+use Psr\Http\Server\RequestHandlerInterface;
+
+//https://github.com/yiisoft/router/blob/master/src/MatchingResult.php
+//https://github.com/yiisoft/router/blob/master/src/Middleware/Router.php#L42
+//TODO : better Marshal function :      https://github.com/yiisoft/router-fastroute/blob/aeb479766daef3e97b61bf1fbbba78a8c0f41330/src/UrlMatcher.php#L257
 
 // TODO : regarder ici : https://github.com/l0gicgate/Slim/blob/4.x-DispatcherResults/Slim/DispatcherResults.php
 //https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/RoutingResults.php
-//https://github.com/yiisoft/router/blob/master/src/MatchingResult.php
 
 /**
  * Value object representing the results of routing.
@@ -34,7 +36,7 @@ use Chiron\Pipe\Pipeline;
  * MatchingResult instances are consumed by the Application in the routing
  * middleware.
  */
-class MatchingResult implements RequestHandlerInterface
+final class MatchingResult implements RequestHandlerInterface
 {
     /**
      * @var string
@@ -48,17 +50,7 @@ class MatchingResult implements RequestHandlerInterface
     /**
      * @var array
      */
-    private $matchedParams = [];
-
-    /**
-     * @var string
-     */
-    private $matchedRouteName;
-
-    /**
-     * @var array
-     */
-    private $matchedRouteMiddlewareStack;
+    private $matchedParameters = [];
 
     /**
      * Route matched during routing.
@@ -82,14 +74,14 @@ class MatchingResult implements RequestHandlerInterface
     /**
      * Create an instance representing a route succes from the matching route.
      *
-     * @param array $params parameters associated with the matched route, if any
+     * @param array $parameters parameters associated with the matched route, if any
      */
-    public static function fromRoute(Route $route, array $params = []): self
+    public static function fromRoute(Route $route, array $parameters): self
     {
         $result = new self();
         $result->success = true;
         $result->route = $route;
-        $result->matchedParams = $params;
+        $result->matchedParameters = $parameters;
 
         return $result;
     }
@@ -133,71 +125,6 @@ class MatchingResult implements RequestHandlerInterface
     }
 
     /**
-     * Retrieve the route that resulted in the route match.
-     *
-     * @return false|null|Route false if representing a routing failure;
-     *                          null if not created via fromRoute(); Route instance otherwise
-     */
-    // TODO : méthode à virer elle ne sert à rien !!!!
-    public function getMatchedRoute()
-    {
-        return $this->isFailure() ? false : $this->route;
-    }
-
-    /**
-     * Retrieve the matched route name, if possible.
-     *
-     * If this result represents a failure, return false; otherwise, return the
-     * matched route name.
-     *
-     * @return false|string
-     */
-    // TODO : méthode à virer elle ne sert à rien !!!!
-    public function getMatchedRouteName()
-    {
-        if ($this->isFailure()) {
-            return false;
-        }
-        if (! $this->matchedRouteName && $this->route) {
-            $this->matchedRouteName = $this->route->getName();
-        }
-
-        return $this->matchedRouteName;
-    }
-
-    /**
-     * Retrieve all the middlewares, if possible.
-     *
-     * If this result represents a failure, return false; otherwise, return the
-     * middleware stack of the Route.
-     *
-     * @return false|array
-     */
-    // TODO : méthode à virer elle ne sert à rien !!!!
-    public function getMatchedRouteMiddlewareStack()
-    {
-        if ($this->isFailure()) {
-            return false;
-        }
-
-        if (! $this->matchedRouteMiddlewareStack && $this->route) {
-            $this->matchedRouteMiddlewareStack = $this->route->getMiddlewareStack();
-        }
-
-        return $this->matchedRouteMiddlewareStack;
-    }
-
-    /**
-     * Returns the matched params.
-     *
-     * Guaranted to return an array, even if it is simply empty.
-     */
-    public function getMatchedParams(): array
-    {
-        return $this->matchedParams;
-    }
-
-    /**
      * Retrieve the allowed methods for the route failure.
      *
      * @return string[] HTTP methods allowed
@@ -213,23 +140,46 @@ class MatchingResult implements RequestHandlerInterface
         return $this->allowedMethods;
     }
 
-    // TODO : lever une exception si on execute ce bout de code sans que le résultat soit à "isSuccess === true"
+    /**
+     * Retrieve the route that resulted in the route match.
+     *
+     * @return false|null|Route false if representing a routing failure;
+     *                          null if not created via fromRoute(); Route instance otherwise
+     */
+    // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
+    public function getMatchedRoute()
+    {
+        return $this->isFailure() ? false : $this->route;
+    }
+
+    /**
+     * Returns the matched parameters.
+     *
+     * Guaranted to return an array, even if it is simply empty.
+     */
+    // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
+    public function getMatchedParameters(): array
+    {
+        return $this->matchedParameters;
+    }
+
+    /**
+     * Store the matched route parameters in the request and execute the route handler.
+     *
+     * @param ServerRequestInterface $request
+     *
+     * @return ResponseInterface
+     */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Merge the default values defined in the Route with the parameters, and add the request class name used to resole the callable parameters using type hint.
-        //$params = array_merge($this->route->getDefaults(), $this->matchedParams, [ServerRequestInterface::class => $request]);
-        $params = array_merge($this->route->getDefaults(), $this->matchedParams);
+        // Merge the default values defined in the Route with the matched route parameters.
+        $parameters = array_merge($this->route->getDefaults(), $this->matchedParameters);
 
-        // Inject individual matched parameters in the Request.
-        foreach ($params as $param => $value) {
-            $request = $request->withAttribute($param, $value);
+        // Inject individual matched parameters in the Request attributes.
+        foreach ($parameters as $parameter => $value) {
+            $request = $request->withAttribute($parameter, $value);
         }
 
-        $pipeline = new Pipeline(
-            $this->route->getMiddlewareStack(),
-            $this->route->getHandler()
-        );
-
-        return $pipeline->handle($request);
+        return $this->route->handle($request);
     }
 }

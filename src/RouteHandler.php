@@ -9,11 +9,14 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Routing\Middleware\RoutingMiddleware;
 
-class RoutingHandler implements RequestHandlerInterface
+final class RouteHandler implements RequestHandlerInterface
 {
     /** @var UrlMatcherInterface */
     private $matcher;
 
+    /**
+     * @param UrlMatcherInterface $matcher
+     */
     public function __construct(UrlMatcherInterface $matcher)
     {
         $this->matcher = $matcher;
@@ -40,9 +43,9 @@ class RoutingHandler implements RequestHandlerInterface
             $request = $routingMiddleware->performRouting($request);
         }
 
-        $result = $request->getAttribute(MatchingResult::ATTRIBUTE);
+        $matchedRoute = $request->getAttribute(MatchingResult::ATTRIBUTE);
 
-        return $result->handle($request);
+        return $matchedRoute->handle($request);
     }
 
     /**
