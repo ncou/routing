@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
+use Chiron\Http\Message\RequestMethod;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Chiron\Http\Message\RequestMethod;
 use Psr\Http\Server\RequestHandlerInterface;
 
 //https://github.com/yiisoft/router/blob/master/src/MatchingResult.php
@@ -38,12 +38,9 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 final class MatchingResult implements RequestHandlerInterface
 {
-    /**
-     * @var string
-     */
     public const ATTRIBUTE = '__MatchingResult__';
     /**
-     * @var null|string[]
+     * @var string[]|null
      */
     private $allowedMethods = [];
 
@@ -143,8 +140,8 @@ final class MatchingResult implements RequestHandlerInterface
     /**
      * Retrieve the route that resulted in the route match.
      *
-     * @return false|null|Route false if representing a routing failure;
-     *                          null if not created via fromRoute(); Route instance otherwise
+     * @return false|Route|null false if representing a routing failure;
+ * null if not created via fromRoute(); Route instance otherwise
      */
     // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
     public function getMatchedRoute()

@@ -189,6 +189,7 @@ class RouteTest extends TestCase
 
     /**
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage HTTP methods argument was empty; must contain at least one method
      */
     public function testMethodEmptyThrowException_1()
@@ -200,6 +201,7 @@ class RouteTest extends TestCase
 
     /**
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage HTTP methods argument was empty; must contain at least one method
      */
     public function testMethodEmptyThrowException_2()
@@ -235,7 +237,9 @@ class RouteTest extends TestCase
 
     /**
      * @dataProvider sanitizeInvalid
+     *
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage Routing requirement for "foo" cannot be empty.
      */
     public function testRequirementSanitizeException($value)
@@ -247,6 +251,7 @@ class RouteTest extends TestCase
 
     /**
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage HTTP methods argument was empty; must contain at least one method
      */
     public function testMethodEmptyException()
@@ -271,7 +276,9 @@ class RouteTest extends TestCase
 
     /**
      * @dataProvider invalidHttpMethodsProvider
+     *
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage One or more HTTP methods were invalid
      */
     public function testMethodInvalidException(array $invalidHttpMethods)
@@ -295,7 +302,9 @@ class RouteTest extends TestCase
 
     /**
      * @dataProvider invalidHttpMethodsProvider
+     *
      * @expectedException InvalidArgumentException
+     *
      * @expectedExceptionMessage One or more HTTP methods were invalid
      */
     public function testMethodInvalidException_2(array $invalidHttpMethods)

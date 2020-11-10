@@ -4,16 +4,10 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Target;
 
+use Chiron\Pipeline\CallableHandler;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-use Chiron\Injector\Injector;
-use Chiron\Injector\Exception\InvocationException;
-use Chiron\Http\Exception\Client\BadRequestHttpException;
-use InvalidArgumentException;
-
-use Chiron\Pipeline\CallableHandler;
 
 // TODO : mieux gérer les exceptions dans le cas ou il y a une erreur lors du $injector->call()    exemple :   https://github.com/spiral/framework/blob/e63b9218501ce882e661acac284b7167b79da30a/src/Hmvc/src/AbstractCore.php#L67       +         https://github.com/spiral/framework/blob/master/src/Router/src/CoreHandler.php#L199
 
@@ -25,7 +19,6 @@ use Chiron\Pipeline\CallableHandler;
  * new Action(HomeController::class, "index");
  * new Action(SingUpController::class, ["login", "logout"]); // creates <action> constrain
  * ```
- *
  */
 //https://github.com/PHP-DI/Slim-Bridge/blob/master/src/ControllerInvoker.php#L43
 final class Action extends CallableHandler implements TargetInterface
@@ -42,7 +35,7 @@ final class Action extends CallableHandler implements TargetInterface
     // TODO : initialiser le paramétre $astion avec la valeur par défaut 'index' ????
     public function __construct(string $controller, $action)
     {
-        if (!is_string($action) && !is_array($action)) {
+        if (! is_string($action) && ! is_array($action)) {
             // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new InvalidArgumentException(sprintf(
                 'Action parameter must have type string or array, `%s` given.',

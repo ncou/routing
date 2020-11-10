@@ -4,26 +4,17 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
-use Chiron\Http\Message\RequestMethod as Method;
-use Chiron\Routing\Target\TargetInterface;
-use Chiron\Routing\Traits\MiddlewareAwareInterface;
-use Chiron\Routing\Traits\MiddlewareAwareTrait;
-use Chiron\Routing\Traits\RouteConditionHandlerInterface;
-use Chiron\Routing\Traits\RouteConditionHandlerTrait;
-use Psr\Http\Server\RequestHandlerInterface;
-use InvalidArgumentException;
 use Chiron\Container\Container;
-use Chiron\Pipeline\Pipeline;
 use Chiron\Container\ContainerAwareInterface;
 use Chiron\Container\ContainerAwareTrait;
+use Chiron\Http\Message\RequestMethod as Method;
+use Chiron\Pipeline\PipelineTrait;
 use Chiron\Routing\Exception\RouteException;
-
+use Chiron\Routing\Target\TargetInterface;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-
-use Chiron\Pipeline\PipelineTrait;
-
+use Psr\Http\Server\RequestHandlerInterface;
 
 //https://github.com/symfony/routing/blob/master/Route.php
 
@@ -40,9 +31,6 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     use ContainerAwareTrait;
     use PipelineTrait;
 
-    /**
-     * @var string
-     */
     public const ATTRIBUTE = '__Route__';
 
     /**
@@ -98,38 +86,47 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     {
         return self::map($path, [Method::GET]);
     }
+
     public static function post(string $path): self
     {
         return self::map($path, [Method::POST]);
     }
+
     public static function put(string $path): self
     {
         return self::map($path, [Method::PUT]);
     }
+
     public static function delete(string $path): self
     {
         return self::map($path, [Method::DELETE]);
     }
+
     public static function patch(string $path): self
     {
         return self::map($path, [Method::PATCH]);
     }
+
     public static function head(string $path): self
     {
         return self::map($path, [Method::HEAD]);
     }
+
     public static function options(string $path): self
     {
         return self::map($path, [Method::OPTIONS]);
     }
+
     public static function trace(string $path): self
     {
         return self::map($path, [Method::TRACE]);
     }
+
     public static function any(string $path): self
     {
         return self::map($path, Method::ANY);
     }
+
     public static function map(string $path, array $methods): self
     {
         $route = new static($path);
@@ -142,6 +139,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      * Speicifes a handler that should be invoked for a matching route.
      *
      * @param RequestHandlerInterface $handler the handler could also be a TargetInterface (it implements the RequestHandlerInterface)
+     *
      * @return Route
      */
     // TODO : gérer le cas ou l'utilisateur n'appel pas cette méthode et donc que le $this->handler est null, car on aura un typeerror quand on va récupérer la valeur via le getteur getHandler() qui doit retourner un objet de type ServerRequestHandlerInterface !!!!!!!!!!!!
@@ -363,13 +361,13 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     // TODO : éviter les yoda comparaisons
     private function sanitizeRequirement(string $key, string $regex): string
     {
-        if ('' !== $regex && '^' === $regex[0]) {
+        if ($regex !== '' && $regex[0] === '^') {
             $regex = substr($regex, 1); // returns false for a single character
         }
-        if ('$' === substr($regex, -1)) {
+        if (substr($regex, -1) === '$') {
             $regex = substr($regex, 0, -1);
         }
-        if ('' === $regex) {
+        if ($regex === '') {
             throw new InvalidArgumentException(sprintf('Routing requirement for "%s" cannot be empty.', $key));
         }
 
@@ -465,18 +463,13 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         // TODO : on pourrait pas simplifier le if en utilisant un exemple comme ca :     $methods = $methods && is_array($methods[0]) ? $methods[0] : $methods;
 
         // Allow passing arrays of methods or individual lists of methods
-        if (isset($methods[0])
-            && is_array($methods[0])
-            && count($methods) === 1
-        ) {
+        if (isset($methods[0]) && is_array($methods[0]) && count($methods) === 1) {
             //$methods = array_shift($methods);
             $methods = $methods[0];
         }
 
         return $this->setAllowedMethods($methods);
     }
-
-
 
     /**
      * Get the host condition.
@@ -553,8 +546,6 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     /**
      * Helper - Sets the scheme requirement to HTTP (no HTTPS).
      *
-     * @param string $scheme
-     *
      * @return static
      */
     public function requireHttp(): self
@@ -564,8 +555,6 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
 
     /**
      * Helper - Sets the scheme requirement to HTTPS.
-     *
-     * @param string $scheme
      *
      * @return static
      */

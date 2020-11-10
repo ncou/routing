@@ -9,13 +9,10 @@ namespace Chiron\Routing\Middleware;
 
 use Chiron\Http\Exception\Client\MethodNotAllowedHttpException;
 use Chiron\Http\Exception\Client\NotFoundHttpException;
-use Chiron\Routing\Route;
 use Chiron\Routing\MatchingResult;
 use Chiron\Routing\UrlMatcherInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -52,12 +49,13 @@ class RoutingMiddleware implements MiddlewareInterface
      * Perform routing (method use 'public' visibility to be called by the RouteHandler if needed).
      *
      * @param  ServerRequestInterface $request PSR7 Server Request
+     *
      * @return ServerRequestInterface
      *
      * @throws NotFoundHttpException
      * @throws MethodNotAllowedHttpException
      */
-    public function performRouting(ServerRequestInterface $request) : ServerRequestInterface
+    public function performRouting(ServerRequestInterface $request): ServerRequestInterface
     {
         $matching = $this->matcher->match($request);
 

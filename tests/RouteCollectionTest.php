@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Chiron\Tests\Routing;
 
-use Chiron\Routing\Route;
-use Chiron\Routing\Router;
 use Chiron\Routing\RouteUrlGenerator;
+use Chiron\Routing\Router;
 use PHPUnit\Framework\TestCase;
 
 class RouteCollectionTest extends TestCase
@@ -112,6 +111,7 @@ class RouteCollectionTest extends TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     *
      * @expectedExceptionMessage Missing data for URL segment: first
      */
     public function testUrlForWithMissingSegmentData()
@@ -130,6 +130,7 @@ class RouteCollectionTest extends TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     *
      * @expectedExceptionMessage Named route does not exist for name:
      */
     public function testUrlForRouteNotExists()
@@ -202,6 +203,7 @@ class RouteCollectionTest extends TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     *
      * @expectedExceptionMessage did not match the regex
      */
     public function testRouteGenerationWrongRegex()
@@ -218,6 +220,7 @@ class RouteCollectionTest extends TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     *
      * @expectedExceptionMessage did not match the regex
      */
     public function testRouteGenerationWrongRegex_2()
@@ -234,6 +237,7 @@ class RouteCollectionTest extends TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     *
      * @expectedExceptionMessage did not match the regex
      */
     public function testRouteGenerationWrongRegex_3()

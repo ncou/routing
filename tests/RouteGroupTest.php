@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Chiron\Tests\Routing;
 
-use Chiron\Routing\Route;
 use Chiron\Routing\RouteGroup;
 use Chiron\Routing\Router;
 use Chiron\Routing\Strategy\StrategyInterface;

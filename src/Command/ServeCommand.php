@@ -10,7 +10,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 //https://github.com/selfinvoking/laravel-rr/blob/master/app/Console/Commands/RoadRunnerCommand.php
-
+// TODO : passer la classe en final.
+// TODO : déplacer dans le package chiron/sapi
 class ServeCommand extends AbstractCommand
 {
     public const EXIT_CODE_NO_DOCUMENT_ROOT = 2;
@@ -82,9 +83,6 @@ class ServeCommand extends AbstractCommand
         $output->writeLn('Quit the server with CTRL-C or COMMAND-C.');
 
         passthru('"' . PHP_BINARY . '"' . " -S {$address} -t \"{$documentRoot}\" $router");
-
-
-
 
         //https://github.com/selfinvoking/laravel-rr/blob/master/app/Console/Commands/RoadRunnerCommand.php
         /*

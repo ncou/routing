@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Chiron\Tests\Routing;
 
-use Chiron\Routing\Route;
 use Chiron\Routing\MatchingResult;
+use Chiron\Routing\Route;
 use Error;
 use PHPUnit\Framework\TestCase;
 
@@ -13,6 +13,7 @@ class MatchingResultTest extends TestCase
 {
     /**
      * @expectedException Error
+     *
      * @expectedExceptionMessage Call to private Chiron\Routing\MatchingResult::__construct()
      */
     public function testClassMatchingResultCantBeInstancied()

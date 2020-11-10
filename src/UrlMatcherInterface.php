@@ -8,7 +8,6 @@ use Psr\Http\Message\ServerRequestInterface;
 
 interface UrlMatcherInterface
 {
-
     /**
      * Match a request uri with a Route pattern.
      *

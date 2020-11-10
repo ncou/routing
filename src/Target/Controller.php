@@ -4,15 +4,9 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Target;
 
-use Psr\Container\ContainerInterface;
+use Chiron\Pipeline\CallableHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-use Chiron\Injector\Injector;
-
-use Chiron\Container\Container;
-use Chiron\Pipeline\CallableHandler;
 
 /**
  * Targets to all actions in specific controller. Variation of Action without action constrain.

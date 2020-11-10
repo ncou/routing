@@ -13,9 +13,7 @@ use Chiron\Routing\Target\Callback;
 use Chiron\Routing\Target\Controller;
 use Chiron\Routing\Target\Group;
 use Chiron\Routing\Target\Namespaced;
-use Closure;
 use ReflectionException;
-use ReflectionFunction;
 use ReflectionObject;
 
 // TODO : déporter cette commande dans le package du Router (cad déplacer cette classe dans le projet Router).
@@ -187,13 +185,11 @@ final class RouteListCommand extends AbstractCommand
                     $this->getValue($handler, 'controller'),
                     implode('|', (array) $this->getValue($handler, 'action'))
                 );
-
             case $handler instanceof Controller:
                 return sprintf(
                     '%s->*',
                     $this->getValue($handler, 'controller')
                 );
-
             case $handler instanceof Group:
                 $result = [];
                 foreach ($this->getValue($handler, 'controllers') as $alias => $class) {
@@ -201,7 +197,6 @@ final class RouteListCommand extends AbstractCommand
                 }
 
                 return implode("\n", $result);
-
             case $handler instanceof Namespaced:
                 return sprintf(
                     '%s\*%s->*',

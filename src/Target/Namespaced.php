@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Target;
 
-use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-use Chiron\Injector\Injector;
 use Chiron\Container\Container;
 use Chiron\Pipeline\CallableHandler;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Provides ability to invoke any controller from given namespace.
@@ -29,8 +25,8 @@ final class Namespaced extends CallableHandler implements TargetInterface
 
     /**
      * @param Container $container
-     * @param string $namespace
-     * @param string $postfix
+     * @param string    $namespace
+     * @param string    $postfix
      */
     public function __construct(string $namespace, string $postfix = 'Controller')
     {
@@ -68,7 +64,7 @@ final class Namespaced extends CallableHandler implements TargetInterface
     /**
      * Converts a word into the format for a Doctrine class name. Converts 'table_name' to 'TableName'.
      */
-    private function classify(string $word) : string
+    private function classify(string $word): string
     {
         return str_replace([' ', '_', '-'], '', ucwords($word, ' _-'));
     }

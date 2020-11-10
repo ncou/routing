@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Controller;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Chiron\Views\TemplateRendererInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 
 final class ViewController
 {
@@ -20,7 +20,7 @@ final class ViewController
     private $factory;
 
     /**
-     * @param ResponseFactoryInterface $factory
+     * @param ResponseFactoryInterface  $factory
      * @param TemplateRendererInterface $renderer
      */
     public function __construct(ResponseFactoryInterface $factory, TemplateRendererInterface $renderer)

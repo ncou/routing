@@ -4,28 +4,16 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-
-use Chiron\Routing\Middleware\RoutingMiddleware;
-
-use Chiron\Routing\Route;
-use Chiron\Routing\RouteGroup;
-use Psr\Http\Server\RequestHandlerInterface;
-
+use ArrayIterator;
+use Chiron\Container\Container;
+use Chiron\Container\SingletonInterface;
+use Chiron\Pipeline\CallableHandler;
 use Chiron\Routing\Controller\RedirectController;
 use Chiron\Routing\Controller\ViewController;
-use Chiron\Routing\Target\TargetFactory;
 use Chiron\Routing\Exception\RouteNotFoundException;
-
-use Chiron\Container\SingletonInterface;
-use Chiron\Container\Container;
-
-use Chiron\Pipeline\CallableHandler;
-
-use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use Psr\Http\Server\RequestHandlerInterface;
 
 // Group / Prefix : https://github.com/mrjgreen/phroute/blob/master/src/Phroute/RouteCollector.php#L185
 
@@ -188,8 +176,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.1
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.3
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -206,8 +193,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.2
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -222,8 +208,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.3
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.5
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -238,8 +223,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.4
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.6
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -254,8 +238,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.5
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -270,8 +253,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.7
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.2
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -286,8 +268,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * @see https://tools.ietf.org/html/rfc7231#section-4.3.8
      * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.8
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -303,8 +284,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      *
      * @see http://tools.ietf.org/html/rfc5789
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */
@@ -317,8 +297,7 @@ final class RouteCollection implements SingletonInterface, Countable, IteratorAg
      * Add route for any HTTP method.
      * Supports the following methods : 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
      *
-     * @param string          $pattern The route URI pattern
-     * @param RequestHandlerInterface $handler The route callback routine
+     * @param string $pattern The route URI pattern
      *
      * @return \Chiron\Routing\Route
      */

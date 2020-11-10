@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
+use Chiron\Routing\Middleware\RoutingMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Chiron\Routing\Middleware\RoutingMiddleware;
 
 final class RouteHandler implements RequestHandlerInterface
 {
