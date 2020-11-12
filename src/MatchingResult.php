@@ -162,6 +162,7 @@ final class MatchingResult implements RequestHandlerInterface
 
     /**
      * Store the matched route parameters in the request and execute the route handler.
+     * Request attributes are be used by the Injector for the route handler parameters resolution.
      *
      * @param ServerRequestInterface $request
      *
@@ -169,11 +170,8 @@ final class MatchingResult implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Merge the default values defined in the Route with the matched route parameters.
-        $parameters = array_merge($this->route->getDefaults(), $this->matchedParameters);
-
         // Inject individual matched parameters in the Request attributes.
-        foreach ($parameters as $parameter => $value) {
+        foreach ($this->matchedParameters as $parameter => $value) {
             $request = $request->withAttribute($parameter, $value);
         }
 

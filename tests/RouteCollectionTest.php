@@ -2,253 +2,310 @@
 
 declare(strict_types=1);
 
-namespace Chiron\Tests\Routing;
+namespace Chiron\Routing\Tests;
 
-use Chiron\Routing\RouteUrlGenerator;
-use Chiron\Routing\Router;
+use Chiron\Routing\RouteCollection;
+use Chiron\Routing\Route;
 use PHPUnit\Framework\TestCase;
+use Chiron\Container\Container;
+use Chiron\Http\Http;
+use Chiron\Http\Message\RequestMethod as Method;
+use Chiron\Http\Message\StatusCode as Status;
+use Chiron\Routing\Exception\RouteNotFoundException;
+use ArrayIterator;
+use Nyholm\Psr7\ServerRequest;
+use Nyholm\Psr7\Uri;
+use Chiron\Views\TemplateRendererInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Chiron\Views\Engine\PhpRenderer;
+use Chiron\Routing\Exception\RouterException;
 
 class RouteCollectionTest extends TestCase
 {
-    /**
-     * Base path is ignored by relativeUrlFor().
-     */
-    public function testRelativeUrlFor()
+    public function testGetFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $router->setBasePath('/base/path');
-        $pattern = '/hello/{first:\w+}/{last}';
+        $route = $collection->get('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $this->assertEquals(
-            '/hello/josh/lockhart',
-            $router->relativeUrlFor('foo', ['first' => 'josh', 'last' => 'lockhart'])
-        );
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::GET);
     }
 
-    public function testUrlForWithNoBasePath()
+    public function testHeadFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $router->setBasePath('');
-        $pattern = '/hello/{first:\w+}/{last}';
+        $route = $collection->head('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $this->assertEquals(
-            '/hello/josh/lockhart',
-            $router->urlFor('foo', ['first' => 'josh', 'last' => 'lockhart'])
-        );
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::HEAD);
     }
 
-    public function testUrlForWithBasePath()
+    public function testPostFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $pattern = '/hello/{first:\w+}/{last}';
+        $route = $collection->post('/foobar');
 
-        $router->setBasePath('/base/path');
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $this->assertEquals(
-            '/base/path/hello/josh/lockhart',
-            $router->urlFor('foo', ['first' => 'josh', 'last' => 'lockhart'])
-        );
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::POST);
     }
 
-    public function testUrlForWithOptionalParameters()
+    public function testPutFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $pattern = '/archive/{year}[/{month}[/d/{day}]]';
+        $route = $collection->put('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $this->assertEquals(
-            '/archive/2015',
-            $router->urlFor('foo', ['year' => '2015'])
-        );
-        $this->assertEquals(
-            '/archive/2015/7',
-            $router->urlFor('foo', ['year' => '2015', 'month' => 7])
-        );
-        $this->assertEquals(
-            '/archive/2015/12/d/19',
-            $router->urlFor('foo', ['year' => '2015', 'month' => '12', 'day' => '19'])
-        );
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::PUT);
     }
 
-    public function testUrlForWithQueryParameters()
+    public function testDeleteFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $pattern = '/hello/{name}';
+        $route = $collection->delete('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $this->assertEquals(
-            '/hello/josh?a=b&c=d',
-            $router->urlFor('foo', ['name' => 'josh'], ['a' => 'b', 'c' => 'd'])
-        );
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::DELETE);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     *
-     * @expectedExceptionMessage Missing data for URL segment: first
-     */
-    public function testUrlForWithMissingSegmentData()
+    public function testOptionsFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $pattern = '/hello/{first}/{last}';
+        $route = $collection->options('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $router->urlFor('foo', ['last' => 'lockhart']);
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::OPTIONS);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     *
-     * @expectedExceptionMessage Named route does not exist for name:
-     */
-    public function testUrlForRouteNotExists()
+    public function testTraceFunction()
     {
-        $router = new Router();
+        $collection = new RouteCollection(new Container());
 
-        $pattern = '/hello/{first}/{last}';
+        $route = $collection->trace('/foobar');
 
-        $route = $router->getRouteCollector()->map($pattern, 'callable');
-        $route->setName('foo');
-
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
-
-        $router->urlFor('bar', ['first' => 'josh', 'last' => 'lockhart']);
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::TRACE);
     }
 
-    // TODO : améliorer les tests, il faut que les queryParams soient calculés automatiquement. regarder les tests mis en commentaire !!!  https://github.com/laravel/framework/blob/5.8/tests/Routing/RoutingUrlGeneratorTest.php#L168
-    public function testBasicRouteGeneration()
+    public function testPatchFunction()
     {
-        $router = new Router();
-        $callable = 'callable';
+        $collection = new RouteCollection(new Container());
 
-        /*
-         * Empty Named Route
-         */
-        $route = $router->getRouteCollector()->get('/', $callable)->setName('plain');
+        $route = $collection->patch('/foobar');
 
-        /*
-         * Named Routes
-         */
-        $route = $router->getRouteCollector()->get('foo/bar', $callable)->setName('foo');
-        /*
-         * Parameters...
-         */
-        $route = $router->getRouteCollector()->get('foo/bar/{baz}/breeze/{boom}', $callable)->setName('bar');
-        /*
-         * Single Parameter...
-         */
-        $route = $router->getRouteCollector()->get('foo/bar/{baz}', $callable)->setName('foobar');
-        /*
-         * Non ASCII routes
-         */
-        $route = $router->getRouteCollector()->get('foo/bar/åαф/{baz}', $callable)->setName('foobarbaz');
-        /*
-         * Fragments
-         */
-        $route = $router->getRouteCollector()->get('foo/bar#derp', $callable)->setName('fragment');
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), (array) Method::PATCH);
+    }
 
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
+    public function testAnyFunction()
+    {
+        $collection = new RouteCollection(new Container());
 
-        $this->assertEquals('/', $router->urlFor('plain', []));
-//        $this->assertEquals('/?foo=bar', $urlGenerator->urlFor('plain', ['foo' => 'bar']));
+        $route = $collection->any('/foobar');
 
-        $this->assertEquals('/foo/bar', $router->urlFor('foo'));
-        $this->assertEquals('/foo/bar', $router->urlFor('foo', []));
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), Method::ANY);
+    }
 
-//        $this->assertEquals('/foo/bar?foo=bar', $urlGenerator->urlFor('foo', ['foo' => 'bar']));
-//        $this->assertEquals('/foo/bar/taylor/breeze/otwell?fly=wall', $urlGenerator->urlFor('bar', ['taylor', 'otwell', 'fly' => 'wall']));
-//        $this->assertEquals('/foo/bar/otwell/breeze/taylor?fly=wall', $urlGenerator->urlFor('bar', ['boom' => 'taylor', 'baz' => 'otwell', 'fly' => 'wall']));
-//        $this->assertEquals('/foo/bar/2', $urlGenerator->urlFor('foobar', [2]));
-//        $this->assertEquals('/foo/bar/taylor', $urlGenerator->urlFor('foobar', ['taylor']));
-//        $this->assertEquals('/foo/bar/taylor/breeze/otwell?fly=wall', $urlGenerator->urlFor('bar', ['taylor', 'otwell', 'fly' => 'wall']));
-//        $this->assertEquals('/foo/bar/taylor/breeze/otwell?wall&woz', $urlGenerator->urlFor('bar', ['wall', 'woz', 'boom' => 'otwell', 'baz' => 'taylor']));
-//        $this->assertEquals('/foo/bar/taylor/breeze/otwell?wall&woz', $urlGenerator->urlFor('bar', ['taylor', 'otwell', 'wall', 'woz']));
-        $this->assertEquals('/foo/bar/%C3%A5%CE%B1%D1%84/%C3%A5%CE%B1%D1%84', $router->urlFor('foobarbaz', ['baz' => 'åαф']));
-        $this->assertEquals('/foo/bar#derp', $router->urlFor('fragment', [], []));
-        $this->assertEquals('/foo/bar?foo=bar#derp', $router->urlFor('fragment', [], ['foo' => 'bar']));
-        $this->assertEquals('/foo/bar?baz=%C3%A5%CE%B1%D1%84#derp', $router->urlFor('fragment', [], ['baz' => 'åαф']));
+    public function testMapFunction()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $route = $collection->map('/foobar');
+
+        $this->assertEquals($route->getPath(), '/foobar');
+        $this->assertEquals($route->getAllowedMethods(), Method::ANY);
+    }
+
+    public function testAddRouteInjectContainer()
+    {
+        $container = new Container();
+        $collection = new RouteCollection($container);
+        $route = new Route('/foobar');
+
+        $this->assertFalse($route->hasContainer());
+
+        $collection->addRoute($route);
+
+        $this->assertTrue($route->hasContainer());
+    }
+
+    public function testMapInjectContainer()
+    {
+        $container = new Container();
+        $collection = new RouteCollection($container);
+
+        $route = $collection->map('/foobar');
+
+        $this->assertTrue($route->hasContainer());
+    }
+
+    public function testPermanentRedirectThrowException()
+    {
+        $collection = new RouteCollection(new Container());
+        $bad_uri = 123;
+
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('Redirection allowed only for string or UriInterface uris.');
+
+        $route = $collection->permanentRedirect($bad_uri, '/foobar');
+    }
+
+    public function testRedirectThrowException()
+    {
+        $collection = new RouteCollection(new Container());
+        $bad_uri = 123;
+
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('Redirection allowed only for string or UriInterface uris.');
+
+        $route = $collection->redirect($bad_uri, '/foobar');
+    }
+
+    public function testViewThrowException()
+    {
+        $collection = new RouteCollection(new Container());
+        $bad_uri = 123;
+
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('View rendering allowed only for string or UriInterface uris.');
+
+        $route = $collection->view($bad_uri, 'my_view_template', ['param1' => 'value1']);
     }
 
     /**
-     * @expectedException \InvalidArgumentException
-     *
-     * @expectedExceptionMessage did not match the regex
+     * @dataProvider uriProvider
      */
-    public function testRouteGenerationWrongRegex()
+    public function testPermanentRedirect($uri)
     {
-        $router = new Router();
-        $callable = 'callable';
+        $container = new Container();
+        $container->bind(ResponseFactoryInterface::class, Psr17Factory::class);
 
-        $route = $router->getRouteCollector()->get('/test/{ param : \d{1,9} }', $callable)->setName('numeric');
+        $collection = new RouteCollection($container);
 
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
+        $route = $collection->permanentRedirect($uri, '/foobar');
 
-        $router->urlFor('numeric', ['param' => 1234567890]);
+        $request = new ServerRequest('GET', '/foo');
+        $response = $route->handle($request);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals($response->getHeader('Location'), (array) '/foobar');
+        $this->assertEquals($response->getStatusCode(), Status::MOVED_PERMANENTLY);
     }
 
     /**
-     * @expectedException \InvalidArgumentException
-     *
-     * @expectedExceptionMessage did not match the regex
+     * @dataProvider uriProvider
      */
-    public function testRouteGenerationWrongRegex_2()
+    public function testRedirect($uri)
     {
-        $router = new Router();
-        $callable = 'callable';
+        $container = new Container();
+        $container->bind(ResponseFactoryInterface::class, Psr17Factory::class);
 
-        $route = $router->getRouteCollector()->get('/test[/{param}[/{id:[0-9]+}]]', $callable)->setName('numeric');
+        $collection = new RouteCollection($container);
 
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
+        $route = $collection->redirect($uri, '/foobar');
 
-        $router->urlFor('numeric', ['param' => 'foo', 'id' => 'foo']);
+        $request = new ServerRequest('GET', '/foo');
+        $response = $route->handle($request);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals($response->getHeader('Location'), (array) '/foobar');
+        $this->assertEquals($response->getStatusCode(), Status::FOUND);
     }
 
     /**
-     * @expectedException \InvalidArgumentException
-     *
-     * @expectedExceptionMessage did not match the regex
+     * @dataProvider uriProvider
      */
-    public function testRouteGenerationWrongRegex_3()
+    public function testView($uri)
     {
-        $router = new Router();
-        $callable = 'callable';
+        $container = new Container();
+        $container->bind(ResponseFactoryInterface::class, Psr17Factory::class);
 
-        $route = $router->getRouteCollector()->get('/{lang:(fr|en)}', $callable)->setName('string');
+        $renderer = new PhpRenderer();
+        $renderer->addPath(__DIR__ . '/Fixtures');
+        $container->bind(TemplateRendererInterface::class, $renderer);
 
-        $urlGenerator = new RouteUrlGenerator($router->getRouteCollector());
+        $collection = new RouteCollection($container);
 
-        $router->urlFor('string', ['lang' => 'foo']);
+        $route = $collection->view($uri, 'my_view_template', ['param1' => 'value1']);
+
+        $request = new ServerRequest('GET', '/foo');
+        $response = $route->handle($request);
+
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals($response->getHeader('Content-Type'), (array) 'text/html');
+        $this->assertEquals((string) $response->getBody(), 'value1');
+        $this->assertEquals($response->getStatusCode(), Status::OK);
+    }
+
+    public function uriProvider(): array
+    {
+        return [
+            ['/foo'],
+            [new Uri('/foo')],
+        ];
+    }
+
+    public function testGetNamedRoute()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $route = $collection->map('/foobar')->name('foo');
+
+        $this->assertSame($route, $collection->getNamedRoute('foo'));
+    }
+
+    public function testGetNamedRouteThrowException()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $route = $collection->map('/foobar')->name('foo');
+
+        $this->expectException(RouteNotFoundException::class);
+        $this->expectExceptionMessage('Named route "non_existing_name" can\'t be found in the route collection.');
+
+        $collection->getNamedRoute('non_existing_name');
+    }
+
+    public function testGetRoutes()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $this->assertSame([], $collection->getRoutes());
+
+        $route = $collection->map('/foobar');
+
+        $this->assertSame([$route], $collection->getRoutes());
+    }
+
+    public function testIterator()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $this->assertInstanceOf(ArrayIterator::class, $collection->getIterator());
+        $this->assertSame([], $collection->getIterator()->getArrayCopy());
+
+        $route = $collection->map('/foobar');
+
+        $this->assertSame([$route], $collection->getIterator()->getArrayCopy());
+    }
+
+    public function testCount()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $this->assertCount(0, $collection);
+
+        $route = $collection->map('/foobar');
+
+        $this->assertCount(1, $collection);
     }
 }

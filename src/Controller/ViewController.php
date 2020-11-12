@@ -30,6 +30,8 @@ final class ViewController
     }
 
     /**
+     * The parameters $template and $parameters are retrieved from the Request attributes.
+     *
      * @param string $template
      * @param array  $parameters
      *

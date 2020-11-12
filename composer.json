@@ -24,6 +24,7 @@
         "phpstan/phpstan-phpunit": "^0.12",
         "overtrue/phplint": "^2.0",
         "chiron/coding-standard": "^3.0",
+        "chiron/views": "^1.1",
         "nyholm/psr7": "^1.1"
     },
     "autoload": {
@@ -33,7 +34,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Chiron\\Tests\\Routing\\": "tests"
+            "Chiron\\Routing\\Tests\\": "tests"
         }
     },
     "scripts": {

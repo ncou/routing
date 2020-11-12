@@ -23,6 +23,8 @@ final class RedirectController
     }
 
     /**
+     * The parameters $destination and $status are retrieved from the Request attributes.
+     *
      * @param string $destination
      * @param int    $status
      *

@@ -75,61 +75,64 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     // TODO : cette initialisation ne semble pas nécessaire !!!!
     private $methods = Method::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
 
-    public function __construct(string $path)
+    // TODO : extraire les default et requirements du pattern ??? https://github.com/symfony/routing/blob/5.x/Route.php#L536 (cf méthode extractInlineDefaultsAndRequirements())
+    // TODO : créer une méthode public setPath() qui serait appellée dans le constructeur ??? cela permet de modifier plus tard le path je suppose !!!!
+    public function __construct(string $pattern)
     {
-        // A path must start with a slash and must not have multiple slashes at the beginning because it would be confused with a network path, e.g. '//domain.com/path'.
-        //$this->path = sprintf('/%s', ltrim($path, '/'));
-        $this->path = '/' . ltrim($path, '/');
+        // A pattern must start with a slash and must not have multiple slashes at the beginning because the
+        // generated path for this route would be confused with a network path, e.g. '//domain.com/path'.
+        $this->path = '/' . ltrim(trim($pattern), '/');
     }
 
-    public static function get(string $path): self
+    public static function get(string $pattern): self
     {
-        return self::map($path, [Method::GET]);
+        return self::map($pattern, [Method::GET]);
     }
 
-    public static function post(string $path): self
+    public static function post(string $pattern): self
     {
-        return self::map($path, [Method::POST]);
+        return self::map($pattern, [Method::POST]);
     }
 
-    public static function put(string $path): self
+    public static function put(string $pattern): self
     {
-        return self::map($path, [Method::PUT]);
+        return self::map($pattern, [Method::PUT]);
     }
 
-    public static function delete(string $path): self
+    public static function delete(string $pattern): self
     {
-        return self::map($path, [Method::DELETE]);
+        return self::map($pattern, [Method::DELETE]);
     }
 
-    public static function patch(string $path): self
+    public static function patch(string $pattern): self
     {
-        return self::map($path, [Method::PATCH]);
+        return self::map($pattern, [Method::PATCH]);
     }
 
-    public static function head(string $path): self
+    public static function head(string $pattern): self
     {
-        return self::map($path, [Method::HEAD]);
+        return self::map($pattern, [Method::HEAD]);
     }
 
-    public static function options(string $path): self
+    public static function options(string $pattern): self
     {
-        return self::map($path, [Method::OPTIONS]);
+        return self::map($pattern, [Method::OPTIONS]);
     }
 
-    public static function trace(string $path): self
+    public static function trace(string $pattern): self
     {
-        return self::map($path, [Method::TRACE]);
+        return self::map($pattern, [Method::TRACE]);
     }
 
-    public static function any(string $path): self
+    public static function any(string $pattern): self
     {
-        return self::map($path, Method::ANY);
+        return self::map($pattern, Method::ANY);
     }
 
-    public static function map(string $path, array $methods): self
+    // TODO : harmoniser la signature de la méthode avec la classe RouteCollection qui contient aussi une méthode "map()".
+    public static function map(string $pattern, array $methods): self
     {
-        $route = new static($path);
+        $route = new static($pattern);
         $route->setAllowedMethods($methods);
 
         return $route;
@@ -604,7 +607,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @param string|MiddlewareInterface or an array of such arguments $middlewares
      *
-     * @return $this (for chaining)
+     * @return $this
      */
     // TODO : gérer aussi les tableaux de middleware, ainsi que les tableaux de tableaux de middlewares
     public function middleware($middleware): self
@@ -619,6 +622,15 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         return $this;
     }
 
+    /**
+     * Extend the setContainer() function defined in the ContianerAwareTrait.
+     * We resolve the middleware stack and the handler the values are corrects.
+     * This verification is done here to allow throwing exceptions during the bootloading !
+     *
+     * @param Container $container
+     *
+     * @return $this
+     */
     // TODO : faire une sorte de extend du ContainerAwareTrait !!!! plutot que de faire cette redéfinition de la méthode ci dessous !!!
     public function setContainer(Container $container): ContainerAwareInterface
     {
@@ -649,10 +661,21 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        // This case shoudn't really happen because the container is injectected via 'RouteCollection::addRoute()'.
         if (! $this->hasContainer()) {
             throw new RouteException('Unable to configure route pipeline without associated container.');
         }
 
-        return $this->getPipeline()->handle($request->withAttribute(self::ATTRIBUTE, $this));
+        // Store the Route default attribute values in the Request attributes (only if not already presents).
+        foreach ($this->defaults as $parameter => $value) {
+            if ($request->getAttribute($parameter) === null) {
+                $request = $request->withAttribute($parameter, $value);
+            }
+        }
+
+        // Store the current Route instance in the attributes (used during 'Injector' parameters resolution).
+        $request = $request->withAttribute(self::ATTRIBUTE, $this);
+
+        return $this->getPipeline()->handle($request);
     }
 }

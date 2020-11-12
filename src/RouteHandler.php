@@ -43,9 +43,9 @@ final class RouteHandler implements RequestHandlerInterface
             $request = $routingMiddleware->performRouting($request);
         }
 
-        $matchedRoute = $request->getAttribute(MatchingResult::ATTRIBUTE);
+        $matching = $request->getAttribute(MatchingResult::ATTRIBUTE);
 
-        return $matchedRoute->handle($request);
+        return $matching->handle($request);
     }
 
     /**

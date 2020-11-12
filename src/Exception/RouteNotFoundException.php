@@ -8,7 +8,7 @@ class RouteNotFoundException extends RouterException
 {
     public function __construct(string $routeName = '', int $code = 0, ?Throwable $previous = null)
     {
-        $message = sprintf('Named route "%s" can\'t be found in the router', $routeName);
+        $message = sprintf('Named route "%s" can\'t be found in the route collection.', $routeName);
 
         parent::__construct($message, $code, $previous);
     }
