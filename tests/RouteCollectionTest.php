@@ -25,6 +25,43 @@ use Chiron\Routing\Exception\RouterException;
 
 class RouteCollectionTest extends TestCase
 {
+    public function testPrefixEmpty()
+    {
+        $collection = new RouteCollection(new Container(), '');
+
+        $route = $collection->map('/foobar');
+
+        $this->assertEquals($route->getPath(), '/foobar');
+    }
+
+    public function testPrefixSlash()
+    {
+        $collection = new RouteCollection(new Container(), '/');
+
+        $route = $collection->map('/foobar');
+
+        $this->assertEquals($route->getPath(), '/foobar');
+    }
+
+    public function testPrefixUsingMapFunction()
+    {
+        $collection = new RouteCollection(new Container(), '/basepath');
+
+        $route = $collection->map('/foobar');
+
+        $this->assertEquals($route->getPath(), '/basepath/foobar');
+    }
+
+    public function testPrefixUsingAddRouteFunction()
+    {
+        $collection = new RouteCollection(new Container(), '/basepath');
+        $route = new Route('/foobar');
+
+        $collection->addRoute($route);
+
+        $this->assertEquals($route->getPath(), '/basepath/foobar');
+    }
+
     public function testGetFunction()
     {
         $collection = new RouteCollection(new Container());
@@ -254,16 +291,97 @@ class RouteCollectionTest extends TestCase
         ];
     }
 
-    public function testGetNamedRoute()
+    public function testGroups(): void
+    {
+        $r = new RouteCollection(new Container());
+
+        $r->delete('/delete');
+        $r->get('/get');
+        $r->head('/head');
+        $r->patch('/patch');
+        $r->post('/post');
+        $r->put('/put');
+        $r->options('/options');
+
+        $r->group('/group-one', static function (RouteCollection $r): void {
+            $r->delete('/delete');
+            $r->get('/get');
+            $r->head('/head');
+            $r->patch('/patch');
+            $r->post('/post');
+            $r->put('/put');
+            $r->options('/options');
+
+            $r->group('/group-two', static function (RouteCollection $r): void {
+                $r->delete('/delete');
+                $r->get('/get');
+                $r->head('/head');
+                $r->patch('/patch');
+                $r->post('/post');
+                $r->put('/put');
+                $r->options('/options');
+            });
+        });
+
+        $r->group('/admin', static function (RouteCollection $r): void {
+            $r->get('-some-info');
+        });
+        $r->group('/admin-', static function (RouteCollection $r): void {
+            $r->get('more-info');
+        });
+
+        $r->group('/slash/', static function (RouteCollection $r): void {
+            $r->get('/slash/');
+        });
+
+        $r->group('/slash', static function (RouteCollection $r): void {
+            $r->get('slash');
+        });
+
+        $expected = [
+            ['DELETE', '/delete'],
+            ['GET', '/get'],
+            ['HEAD', '/head'],
+            ['PATCH', '/patch'],
+            ['POST', '/post'],
+            ['PUT', '/put'],
+            ['OPTIONS', '/options'],
+            ['DELETE', '/group-one/delete'],
+            ['GET', '/group-one/get'],
+            ['HEAD', '/group-one/head'],
+            ['PATCH', '/group-one/patch'],
+            ['POST', '/group-one/post'],
+            ['PUT', '/group-one/put'],
+            ['OPTIONS', '/group-one/options'],
+            ['DELETE', '/group-one/group-two/delete'],
+            ['GET', '/group-one/group-two/get'],
+            ['HEAD', '/group-one/group-two/head'],
+            ['PATCH', '/group-one/group-two/patch'],
+            ['POST', '/group-one/group-two/post'],
+            ['PUT', '/group-one/group-two/put'],
+            ['OPTIONS', '/group-one/group-two/options'],
+            ['GET', '/admin/-some-info'],
+            ['GET', '/admin-/more-info'],
+            ['GET', '/slash/slash/'],
+            ['GET', '/slash/slash'],
+        ];
+
+        foreach ($r->getRoutes() as $index => $route) {
+            self::assertSame((array) $expected[$index][0], $route->getAllowedMethods());
+            self::assertSame($expected[$index][1], $route->getPath());
+        }
+    }
+
+    public function testGetRoute()
     {
         $collection = new RouteCollection(new Container());
 
         $route = $collection->map('/foobar')->name('foo');
 
-        $this->assertSame($route, $collection->getNamedRoute('foo'));
+        $this->assertSame($route, $collection->getRoute('foo'));
     }
 
-    public function testGetNamedRouteThrowException()
+    public function testGetRouteThrowException()
     {
         $collection = new RouteCollection(new Container());
 
@@ -272,7 +390,18 @@ class RouteCollectionTest extends TestCase
         $this->expectException(RouteNotFoundException::class);
         $this->expectExceptionMessage('Named route "non_existing_name" can\'t be found in the route collection.');
 
-        $collection->getNamedRoute('non_existing_name');
+        $collection->getRoute('non_existing_name');
+    }
+
+    public function testhasRoute()
+    {
+        $collection = new RouteCollection(new Container());
+
+        $this->assertFalse($collection->hasRoute('foo'));
+
+        $route = $collection->map('/foobar')->name('foo');
+
+        $this->assertTrue($collection->hasRoute('foo'));
     }
 
     public function testGetRoutes()

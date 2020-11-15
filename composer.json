@@ -54,7 +54,6 @@
                 "Chiron\\Routing\\Provider\\RoutingServiceProvider"
             ],
             "bootloaders": [
-                "Chiron\\Routing\\Bootloader\\RouteCollectionBootloader",
                 "Chiron\\Routing\\Bootloader\\RoutingCommandBootloader",
                 "Chiron\\Routing\\Bootloader\\RouteHandlerBootloader"
             ]

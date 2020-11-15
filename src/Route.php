@@ -33,37 +33,22 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
 
     public const ATTRIBUTE = '__Route__';
 
-    /**
-     * @var string|null
-     */
+    /** @var string|null */
     protected $host;
-
-    /**
-     * @var string|null
-     */
+    /** @var string|null */
     protected $scheme;
-
-    /**
-     * @var int|null
-     */
+    /** @var int|null */
     protected $port;
-
     /** @var array */
     private $requirements = [];
-
     /** @var array */
     private $defaults = [];
-
     /** @var string|null */
     private $name;
-
-    /**
-     * The route path pattern (The URL pattern (e.g. "article/[:year]/[i:category]")).
-     *
-     * @var string
-     */
+    /** @var string */
     private $path;
 
+    // TODO : ajouter la phpDoc !!!
     private $target;
 
     /**
@@ -79,9 +64,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     // TODO : créer une méthode public setPath() qui serait appellée dans le constructeur ??? cela permet de modifier plus tard le path je suppose !!!!
     public function __construct(string $pattern)
     {
-        // A pattern must start with a slash and must not have multiple slashes at the beginning because the
-        // generated path for this route would be confused with a network path, e.g. '//domain.com/path'.
-        $this->path = '/' . ltrim(trim($pattern), '/');
+        $this->setPath($pattern);
     }
 
     public static function get(string $pattern): self
@@ -171,9 +154,28 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         $this->handler = $handler;
     }
 
+    /**
+     * Returns the pattern for the path.
+     *
+     * @return string The path pattern
+     */
     public function getPath(): string
     {
         return $this->path;
+    }
+
+    /**
+     * Sets the pattern for the path.
+     *
+     * @return $this
+     */
+    public function setPath(string $pattern): self
+    {
+        // A pattern must start with a slash and must not have multiple slashes at the beginning because the
+        // generated path for this route would be confused with a network path, e.g. '//domain.com/path'.
+        $this->path = '/' . ltrim(trim($pattern), '/');
+
+        return $this;
     }
 
     /**
@@ -418,6 +420,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @return array
      */
+    // TODO : renommer cette méthode en getMethods()
     public function getAllowedMethods(): array
     {
         return array_unique($this->methods);
@@ -430,7 +433,8 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @return self
      */
-    // filtrer les méthodes cf exemple :       https://github.com/slimphp/Slim-Psr7/blob/master/src/Request.php#L155
+    // TODO : filtrer les méthodes cf exemple :       https://github.com/slimphp/Slim-Psr7/blob/master/src/Request.php#L155
+    // TODO : renommer cette méthode en setMethods()
     public function setAllowedMethods(array $methods): self
     {
         if (empty($methods)) {
@@ -457,8 +461,6 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @param string|array ...$middleware
      */
-    // TODO : faire plutot des méthodes : getMethods() et setMethods()
-    // TODO : à renommer en allows() ????
     public function method(...$methods): self
     {
         //$methods = is_array($methods[0]) ? $methods[0] : $methods;
@@ -566,7 +568,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         return $this->setScheme('https');
     }
 
-   /**
+    /**
      * Get the port condition.
      *
      * @return int|null
@@ -624,14 +626,13 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
 
     /**
      * Extend the setContainer() function defined in the ContianerAwareTrait.
-     * We resolve the middleware stack and the handler the values are corrects.
-     * This verification is done here to allow throwing exceptions during the bootloading !
+     * We resolve the middleware stack and the handler using the container (if it's a string).
+     * If the resolution throw an exception it will be shown during the bootloading !
      *
      * @param Container $container
      *
      * @return $this
      */
-    // TODO : faire une sorte de extend du ContainerAwareTrait !!!! plutot que de faire cette redéfinition de la méthode ci dessous !!!
     public function setContainer(Container $container): ContainerAwareInterface
     {
         $this->container = $container;

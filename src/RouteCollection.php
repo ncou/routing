@@ -72,48 +72,25 @@ use Psr\Http\Message\UriInterface;
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
  */
-final class RouteCollection implements Countable, IteratorAggregate, SingletonInterface
+final class RouteCollection implements Countable, IteratorAggregate
 {
-    /**
-     * @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host)
-     */
-    private $basePath = '/';
+    /** @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host) */
+    private $prefix;
 
-    /**
-     * List of all routes registered directly with the application.
-     *
-     * @var Route[]
-     */
+    /** @var Route[] List of all routes registered directly with the application. */
     private $routes = [];
 
     /** @var Container */
     private $container;
 
-    public function __construct(Container $container)
+    /**
+     * @param Container $container
+     * @param string    $basePath Useful if you are running your application from a subdirectory.
+     */
+    public function __construct(Container $container, string $basePath = '/')
     {
         $this->container = $container;
-    }
-
-    /**
-     * Set the base path.
-     * Useful if you are running your application from a subdirectory.
-     */
-    // TODO : tester cette méthode et réfléchir à comment on trim de slash '/' (plutot à gauche ou droite ou les deux ????).
-    public function setBasePath(string $basePath): void
-    {
-        //$this->basePath = rtrim($basePath, '/');
-        //$this->basePath = $basePath;
-        //$this->basePath = '/' . ltrim($basePath, '/');
-
-        $this->basePath = sprintf('/%s', ltrim($basePath, '/'));
-    }
-
-    /**
-     * Get the router base path.
-     */
-    public function getBasePath(): string
-    {
-        return $this->basePath;
+        $this->prefix = trim(trim($basePath), '/');
     }
 
     /**
@@ -258,15 +235,9 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
      * @return Route
      */
     // TODO : harmoniser la signature de la méthode avec la classe Route qui contient aussi une méthode statique "map()" mais on peut lui passer un tableau de méthodes en second paramétre.
-    // TODO : renommer cette méthode en 'add()' ??? https://github.com/symfony/routing/blob/5.x/RouteCollectionBuilder.php#L95
     public function map(string $pattern): Route
     {
-        // TODO : ATTENTION !!!! déplacer cette méthode dans le "addRoute" et utiliser un appel au Route->setPath() pour mettre à jour le path. Car dans le cas ou on crée manuellement une route et qu'on l'ajoute ensuite au RouteCollector qui a été configuré avec un basePath, celui-ci ne sera pas appliqué lorsqu'on ajoutera la Route !!!!
-        // TODO : attention on va avoir un bug, dans le cas ou on ajoute une Route manuellement via addRoute (ou même via map()) et qu'on modifie ensuite le basePath, il ne sera pas appliqué aux routes car il n'y a pas d'update du Route->setPath() lorsuq'on ajoute un basePath (via setBasePath()). => Solution : mettre le basePath en paramétre du constructeur et virer la méthode setBasePath, comme ca on n'a plus ce risque de bugs !!!! Ou alors dans la méthode setBasePath on boucle sur les routes pour ajouter le basepath au path de la Route !!! https://github.com/symfony/routing/blob/5.x/RouteCollection.php#L157
-        $pattern = rtrim($this->basePath, '/') . '/' . ltrim($pattern, '/'); // TODO : vérifier les différents trims, pour pas que cela soit redondant avec le code dans la classe Route::__constructor($path)!!! https://github.com/symfony/routing/blob/5.x/RouteCollectionBuilder.php#L270
-
         $route = new Route($pattern);
-
         $this->addRoute($route);
 
         return $route;
@@ -274,6 +245,7 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
 
     /**
      * Add a Route to the collection and 'inject' the container.
+     * The Route pattern is also updated to include the 'basepath'.
      *
      * @param Route $route
      *
@@ -281,10 +253,59 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
      */
     public function addRoute(Route $route): self
     {
-        $route->setContainer($this->container);
+        // Add the container if not already presents in the Route instance.
+        if (! $route->hasContainer()) {
+            $route->setContainer($this->container);
+        }
+
+        // Update the route path to append the routecollection prefix.
+        $pattern = '/' . $this->prefix . $route->getPath();
+        $route->setPath($pattern);
+
         $this->routes[] = $route;
 
         return $this;
+    }
+
+    /**
+     * Check if the named route exists.
+     *
+     * @param string $name Route name.
+     *
+     * @return bool
+     */
+    public function hasRoute(string $name): bool
+    {
+        foreach ($this->routes as $route) {
+            if ($route->getName() === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get a named route.
+     *
+     * @param string $name Route name.
+     *
+     * @throws RouteNotFoundException If named route does not exist.
+     *
+     * @return Route
+     */
+    // TODO : il faudrait rajouter un contrôle sur les doublons de "name" ??? car cela peut poser soucis (notamment si on souhaite générer une url pour une route nommée) !!!!
+    // TODO : supprimer la classe RouteNotFoundException du package pour utiliser l'exception générique RouterException ????
+    // TODO : réfléchir si il faut lever une exception ou alors simplement retourner null si la route n'existe pas !!!
+    public function getRoute(string $name): Route
+    {
+        foreach ($this->routes as $route) {
+            if ($route->getName() === $name) {
+                return $route;
+            }
+        }
+
+        throw new RouteNotFoundException($name);
     }
 
     /**
@@ -295,6 +316,8 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
      *
      * @param UriInterface|string $uri
      * @param string $destination
+     *
+     * @throws RouterException If the $uri parameter is not valid.
      *
      * @return Route
      */
@@ -312,6 +335,8 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
      * @param UriInterface|string $uri
      * @param string $destination
      * @param int    $status
+     *
+     * @throws RouterException If the $uri parameter is not valid.
      *
      * @return Route
      */
@@ -336,6 +361,8 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
      * @param string $template
      * @param array  $parameters
      *
+     * @throws RouterException If the $uri parameter is not valid.
+     *
      * @return Route
      */
     public function view($uri, string $template, array $params = []): Route
@@ -354,31 +381,25 @@ final class RouteCollection implements Countable, IteratorAggregate, SingletonIn
     }
 
     /**
-     * Get a named route.
+     * Create a route group with a common prefix.
      *
-     * @param string $name Route name
+     * All routes created in the passed callback will have the given prefix prepended.
      *
-     * @throws RouteNotFoundException If named route does not exist
-     *
-     * @return Route
+     * @param string $template
+     * @param array  $parameters
      */
-    // TODO : il faudrait rajouter un contrôle sur les doublons de "name" ??? car cela peut poser soucis (notamment si on souhaite générer une url pour une route nommée) !!!!
-    // TODO : renommer la méthode en getRoute() ????
-    // TODO : supprimer la classe RouteNotFoundException du package pour utiliser l'exception générique RouterException ????
-    // TODO : réfléchir si il faut lever une exception ou alors simplement retourner null si la route n'existe pas !!!
-    public function getNamedRoute(string $name): Route
+    public function group(string $prefix, callable $callback): void
     {
-        foreach ($this->routes as $route) {
-            if ($route->getName() === $name) {
-                return $route;
-            }
-        }
+        $previousPrefix = $this->prefix;
+        $this->prefix = $previousPrefix . rtrim(trim($prefix), '/');
 
-        throw new RouteNotFoundException($name);
+        $callback($this);
+
+        $this->prefix = $previousPrefix;
     }
 
     /**
-     * Get route objects.
+     * Get all route objects.
      *
      * @return Route[]
      */
