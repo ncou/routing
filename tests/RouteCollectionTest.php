@@ -215,7 +215,7 @@ class RouteCollectionTest extends TestCase
         $this->expectException(RouterException::class);
         $this->expectExceptionMessage('View rendering allowed only for string or UriInterface uris.');
 
-        $route = $collection->view($bad_uri, 'my_view_template', ['param1' => 'value1']);
+        $route = $collection->view($bad_uri, 'my_view_template', ['name' => 'Foobar']);
     }
 
     /**
@@ -272,14 +272,14 @@ class RouteCollectionTest extends TestCase
 
         $collection = new RouteCollection($container);
 
-        $route = $collection->view($uri, 'my_view_template', ['param1' => 'value1']);
+        $route = $collection->view($uri, 'my_view_template', ['name' => 'Foobar']);
 
         $request = new ServerRequest('GET', '/foo');
         $response = $route->handle($request);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
         $this->assertEquals($response->getHeader('Content-Type'), (array) 'text/html');
-        $this->assertEquals((string) $response->getBody(), 'value1');
+        $this->assertEquals((string) $response->getBody(), 'Foobar');
         $this->assertEquals($response->getStatusCode(), Status::OK);
     }
 
