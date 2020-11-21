@@ -8,7 +8,7 @@ use Chiron\Container\Container;
 use Chiron\Container\ContainerAwareInterface;
 use Chiron\Container\ContainerAwareTrait;
 use Chiron\Http\Message\RequestMethod as Method;
-use Chiron\Pipeline\PipelineTrait;
+use Chiron\Http\Traits\PipelineTrait;
 use Chiron\Routing\Exception\RouteException;
 use Chiron\Routing\Target\TargetInterface;
 use InvalidArgumentException;
@@ -373,6 +373,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
             $regex = substr($regex, 0, -1);
         }
         if ($regex === '') {
+            // TODO : lever une RouteException
             throw new InvalidArgumentException(sprintf('Routing requirement for "%s" cannot be empty.', $key));
         }
 
@@ -438,6 +439,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     public function setAllowedMethods(array $methods): self
     {
         if (empty($methods)) {
+            // TODO : lever une RouteException
             throw new InvalidArgumentException(
                 'HTTP methods argument was empty; must contain at least one method'
             );

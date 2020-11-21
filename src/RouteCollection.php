@@ -74,12 +74,10 @@ use Psr\Http\Message\UriInterface;
  */
 final class RouteCollection implements Countable, IteratorAggregate
 {
-    /** @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host) */
-    private $prefix;
-
     /** @var Route[] List of all routes registered directly with the application. */
     private $routes = [];
-
+    /** @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host) */
+    private $prefix;
     /** @var Container */
     private $container;
 

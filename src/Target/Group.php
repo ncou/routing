@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Target;
 
-use Chiron\Pipeline\CallableHandler;
+use Chiron\Http\CallableHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
