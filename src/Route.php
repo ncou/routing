@@ -23,10 +23,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 // et l'utilitaire pour faire un deep merge (mergeRecursive) :   https://github.com/ventoviro/windwalker-utilities/blob/master/Arr.php#L803
 // et le bout de code pour récupérer les extra : https://github.com/ventoviro/windwalker/blob/8b1aba30967dd0e6c4374aec0085783c3d0f88b4/src/Router/Route.php#L515
 
-// TODO : remplacer le terme Alias dans les commentaires par Proxy
-// TODO : passer la classe en final et virer les champs protected
 // TODO : utiliser le point d'interrogation et ?null pour initialiser certaines variables   => https://github.com/yiisoft/router/blob/master/src/Route.php#L19 pour fonctionner en version 7.4 !!!!
-class Route implements RequestHandlerInterface, ContainerAwareInterface
+final class Route implements RequestHandlerInterface, ContainerAwareInterface
 {
     use ContainerAwareTrait;
     use PipelineTrait;
@@ -34,11 +32,11 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     public const ATTRIBUTE = '__Route__';
 
     /** @var string|null */
-    protected $host;
+    private $host;
     /** @var string|null */
-    protected $scheme;
+    private $scheme;
     /** @var int|null */
-    protected $port;
+    private $port;
     /** @var array */
     private $requirements = [];
     /** @var array */
@@ -112,7 +110,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         return self::map($pattern, Method::ANY);
     }
 
-    // TODO : harmoniser la signature de la méthode avec la classe RouteCollection qui contient aussi une méthode "map()".
+    // TODO : harmoniser la signature de la méthode avec la classe RouteCollection qui contient aussi une méthode "map()" mais qui n'utilise pas le second paramétre $methods !!!!
     public static function map(string $pattern, array $methods): self
     {
         $route = new static($pattern);
@@ -259,7 +257,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Alias for setDefault.
+     * Proxy method for "setDefault()".
      *
      * @param string $name    A variable name
      * @param mixed  $default The default value
@@ -405,7 +403,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Alia function for "setName()".
+     * Proxy method for "setName()".
      *
      * @param string $name
      *
@@ -459,7 +457,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }*/
 
     /**
-     * Alia function for "setAllowedMethods()".
+     * Proxy method for "setAllowedMethods()".
      *
      * @param string|array ...$middleware
      */
@@ -503,7 +501,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Alias function for "setHost()".
+     * Proxy method for "setHost()".
      *
      * @param string $host
      *
@@ -539,7 +537,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Alias function for "setScheme()".
+     * Proxy method for "setScheme()".
      *
      * @param string $scheme
      *
@@ -595,7 +593,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Alias function for "setPort()".
+     * Proxy method for "setPort()".
      *
      * @param int $port
      *
@@ -614,6 +612,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
      * @return $this
      */
     // TODO : gérer aussi les tableaux de middleware, ainsi que les tableaux de tableaux de middlewares
+    // TODO : il faudrait pas ajouter un mécanisme pour éviter les doublons lorsqu'on ajoute un middleware ???? en vérifiant le get_class par exemple.
     public function middleware($middleware): self
     {
         // Resolve the middleware if the container is presents, else the resolution will be done later.
@@ -677,7 +676,7 @@ class Route implements RequestHandlerInterface, ContainerAwareInterface
         }
 
         // Store the current Route instance in the attributes (used during 'Injector' parameters resolution).
-        $request = $request->withAttribute(self::ATTRIBUTE, $this);
+        $request = $request->withAttribute(static::ATTRIBUTE, $this);
 
         return $this->getPipeline()->handle($request);
     }

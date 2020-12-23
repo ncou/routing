@@ -69,6 +69,8 @@ use Psr\Http\Message\UriInterface;
 // TODO : utiliser des classes de constantes pour les headers, status code et autre méthodes (GET/POST/PUT...etc)
 // TODO : ajouter une fonction pour gérer les group, soit on l'appelle 'prefix()' ou 'mount()' ou 'group()' https://github.com/symfony/routing/blob/5.x/RouteCollectionBuilder.php#L117
 // TODO : générer un nom unique pour la route ??? https://github.com/symfony/routing/blob/5.x/RouteCollectionBuilder.php#L316
+// TODO : il faudrait rajouter un contrôle sur les doublons de "name" ??? car cela peut poser soucis (notamment si on souhaite générer une url pour une route nommée) !!!!
+// TODO : harmoniser la signature de la méthode 'map()' avec celle de la classe Route qui contient aussi une méthode statique "map()" mais on peut lui passer un tableau de méthodes en second paramétre.
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
  */
@@ -88,7 +90,7 @@ final class RouteCollection implements Countable, IteratorAggregate
     public function __construct(Container $container, string $basePath = '/')
     {
         $this->container = $container;
-        $this->prefix = trim(trim($basePath), '/');
+        $this->prefix = trim(trim($basePath), '/'); // TODO : il faudrait pas remonter ce bout de code [les différents trim()] directement dans la méthode httpConfig->getBasePath() ????
     }
 
     /**
@@ -232,7 +234,6 @@ final class RouteCollection implements Countable, IteratorAggregate
      *
      * @return Route
      */
-    // TODO : harmoniser la signature de la méthode avec la classe Route qui contient aussi une méthode statique "map()" mais on peut lui passer un tableau de méthodes en second paramétre.
     public function map(string $pattern): Route
     {
         $route = new Route($pattern);
@@ -292,9 +293,6 @@ final class RouteCollection implements Countable, IteratorAggregate
      *
      * @return Route
      */
-    // TODO : il faudrait rajouter un contrôle sur les doublons de "name" ??? car cela peut poser soucis (notamment si on souhaite générer une url pour une route nommée) !!!!
-    // TODO : supprimer la classe RouteNotFoundException du package pour utiliser l'exception générique RouterException ????
-    // TODO : réfléchir si il faut lever une exception ou alors simplement retourner null si la route n'existe pas !!!
     public function getRoute(string $name): Route
     {
         foreach ($this->routes as $route) {
