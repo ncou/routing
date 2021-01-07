@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Command;
 
-use Chiron\Console\AbstractCommand;
+use Chiron\Core\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
