@@ -11,7 +11,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 //https://github.com/selfinvoking/laravel-rr/blob/master/app/Console/Commands/RoadRunnerCommand.php
 // TODO : passer la classe en final.
-// TODO : déplacer dans le package chiron/sapi
+// TODO : déplacer dans le package chiron/sapi !!!!
+
+//https://github.com/symfony/web-server-bundle/blob/4.4/WebServer.php
+
 class ServeCommand extends AbstractCommand
 {
     public const EXIT_CODE_NO_DOCUMENT_ROOT = 2;
@@ -104,7 +107,7 @@ class ServeCommand extends AbstractCommand
     {
         [$hostname, $port] = explode(':', $address);
 
-        $fp = @fsockopen($hostname, $port, $errno, $errstr, 1);
+        $fp = @fsockopen($hostname, (int)$port, $errno, $errstr, 1);
         if ($fp === false) {
             return false;
         }
