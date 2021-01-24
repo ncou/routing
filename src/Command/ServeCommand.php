@@ -14,6 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 // TODO : déplacer dans le package chiron/sapi !!!!
 
 //https://github.com/symfony/web-server-bundle/blob/4.4/WebServer.php
+//https://github.com/symfony/panther/blob/fe217e2f9606ff6cfe14cd4f5fc0d92da9fad118/src/ProcessManager/WebServerManager.php
 
 class ServeCommand extends AbstractCommand
 {
@@ -103,6 +104,8 @@ class ServeCommand extends AbstractCommand
      *
      * @return bool if address is already in use
      */
+    //https://github.com/symfony/web-server-bundle/blob/d1eb905afca7d4957420c4b6809e2275d3e5e85d/WebServer.php#L138
+    //https://github.com/symfony/panther/blob/fe217e2f9606ff6cfe14cd4f5fc0d92da9fad118/src/ProcessManager/WebServerReadinessProbeTrait.php#L30
     private function isAddressTaken(string $address): bool
     {
         [$hostname, $port] = explode(':', $address);
