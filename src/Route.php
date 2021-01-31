@@ -676,7 +676,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
         }
 
         // Store the current Route instance in the attributes (used during 'Injector' parameters resolution).
-        $request = $request->withAttribute(static::ATTRIBUTE, $this);
+        $request = $request->withAttribute(static::ATTRIBUTE, $this); // TODO : vérifier l'utilité de ce code !!!
 
         return $this->getPipeline()->handle($request);
     }

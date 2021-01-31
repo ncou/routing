@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Command;
 
-use Chiron\Core\Console\AbstractCommand;
+use Chiron\Core\Command\AbstractCommand;
 use Chiron\Http\Message\RequestMethod;
 use Chiron\Routing\Route;
 use Chiron\Routing\RouteCollection;

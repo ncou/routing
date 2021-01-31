@@ -36,6 +36,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  * MatchingResult instances are consumed by the Application in the routing
  * middleware.
  */
+// TODO : renommer en RoutingResults ???
 final class MatchingResult implements RequestHandlerInterface
 {
     public const ATTRIBUTE = '__MatchingResult__';
@@ -144,6 +145,7 @@ final class MatchingResult implements RequestHandlerInterface
  * null if not created via fromRoute(); Route instance otherwise
      */
     // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
+    // TODO : renovyer plutot null si c'est un failure ca sera plus propre d'avoir un return type ?Route plutot que rien du tout !!!!
     public function getMatchedRoute()
     {
         return $this->isFailure() ? false : $this->route;
@@ -154,7 +156,7 @@ final class MatchingResult implements RequestHandlerInterface
      *
      * Guaranted to return an array, even if it is simply empty.
      */
-    // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
+    // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!! => Faux car on pourrait créer un helper pour récupérer les parametres de la route pour faciliter la tache à l'utilisateur !!! https://github.com/irazasyed/larasupport/blob/11fc641af48c2b5c92fb4400bb628e71222456ef/src/helpers.php#L5
     public function getMatchedParameters(): array
     {
         return $this->matchedParameters;

@@ -9,6 +9,7 @@ use Chiron\Container\Container;
 use Chiron\Core\Container\Provider\ServiceProviderInterface;
 use Chiron\Core\Exception\ScopeException;
 use Chiron\Routing\Route;
+use Chiron\Routing\MatchingResult;
 use Closure;
 use Psr\Http\Message\ServerRequestInterface;
 use Chiron\Http\Config\HttpConfig;
@@ -27,9 +28,28 @@ class RoutingServiceProvider implements ServiceProviderInterface
     public function register(BindingInterface $binder): void
     {
         // This SHOULDN'T BE a singleton(), use a basic bind() to ensure Request instance is fresh !
-        $binder->bind(Route::class, Closure::fromCallable([$this, 'route']));
+        $binder->bind(MatchingResult::class, Closure::fromCallable([$this, 'matchingResult']));
+        $binder->bind(Route::class, Closure::fromCallable([$this, 'route'])); // TODO : utilité du truc ? on devrait plutot récupérer l'objet MatchingResult et retourner la route via la méthode ->getMatchedRoute();
         // This should be a singleton, because the route collection could be updated during app bootloading.
         $binder->singleton(RouteCollection::class, Closure::fromCallable([$this, 'routeCollection']));
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     *
+     * @throws ScopeException If the attribute is not found in the request.
+     *
+     * @return MatchingResult
+     */
+    private function matchingResult(ServerRequestInterface $request): MatchingResult
+    {
+        $matchingResult = $request->getAttribute(MatchingResult::ATTRIBUTE);
+
+        if ($matchingResult === null) {
+            throw new ScopeException('Unable to resolve MatchingResult, invalid request scope.');
+        }
+
+        return $matchingResult;
     }
 
     /**
