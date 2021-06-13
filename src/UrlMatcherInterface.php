@@ -15,8 +15,8 @@ interface UrlMatcherInterface
      *
      * @return MatchingResult
      *
-     * @throws Exception\RouterException If an internal problem occured
+     * @throws Exception\RouterException Error while matching the url.
      */
-    // TODO : voir si on garde le tag @throw dans la phpdoc.
+    // TODO : eventuellement créer une interface pour l'exception, comme par exemple l'implémentation du PSR11 pour le container !!! https://www.php-fig.org/psr/psr-11/
     public function match(ServerRequestInterface $request): MatchingResult;
 }

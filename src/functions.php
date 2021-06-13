@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Chiron\Routing\MatchingResult;
-use Psr\Http\Message\ServerRequestInterface;
 
 if (! function_exists('route_parameter')) {
     /**
@@ -23,6 +22,6 @@ if (! function_exists('route_parameter')) {
 
         // TODO : créer une classe Arr dans chiron/core/support avec une méthode get() qui fait ce type de code de maniére plus propre !!!!
         // TODO : ou alors créer directement une méthode 'getParameter(string $name, $default = null)' dans la classe MatchingResult qui ferait le bout de code ci dessous !!!
-        return isset($matchingResult->getMatchedParameters()[$name]) ? $matchingResult->getMatchedParameters()[$name] : $default;
+        return $matchingResult->getMatchedParameters()[$name] ?? $default;
     }
 }

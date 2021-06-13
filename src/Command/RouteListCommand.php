@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace Chiron\Routing\Command;
 
 use Chiron\Core\Command\AbstractCommand;
-use Chiron\Http\Message\RequestMethod;
+use Chiron\Http\CallableHandler;
+use Chiron\Http\Message\RequestMethod as Method;
 use Chiron\Routing\Route;
-use Chiron\Routing\RouteCollection;
+use Chiron\Routing\Map;
 use Chiron\Routing\Target\Action;
-use Chiron\Routing\Target\Callback;
 use Chiron\Routing\Target\Controller;
 use Chiron\Routing\Target\Group;
 use Chiron\Routing\Target\Namespaced;
 use ReflectionException;
 use ReflectionObject;
 
-// TODO : déporter cette commande dans le package du Router (cad déplacer cette classe dans le projet Router).
+//https://github.com/spiral/framework/blob/d17c175e85165456fbd2d841c8e81165e371675c/src/Framework/Command/Router/ListCommand.php
+//https://github.com/spiral/framework/blob/d17c175e85165456fbd2d841c8e81165e371675c/tests/Framework/Framework/RouteListTest.php
+
+//https://github.com/top-think/framework/blob/6.0/src/think/console/command/RouteList.php
+
 final class RouteListCommand extends AbstractCommand
 {
     protected static $defaultName = 'route:list';
@@ -26,7 +30,7 @@ final class RouteListCommand extends AbstractCommand
         $this->setDescription('List application routes.');
     }
 
-    public function perform(RouteCollection $routes): int
+    public function perform(Map $map): int
     {
         //die(var_dump($this->input->hasParameterOption(['-n'], true)));
         //die(var_dump($this->input->hasParameterOption(['--no-interaction'], true)));
@@ -73,7 +77,7 @@ final class RouteListCommand extends AbstractCommand
 
         $grid = $this->table(['Method:', 'Path:', 'Handler:']);
 
-        foreach ($routes as $route) {
+        foreach ($map as $route) {
             $grid->addRow(
                 [
                     $this->getAllowedMethods($route),
@@ -95,7 +99,7 @@ final class RouteListCommand extends AbstractCommand
      */
     private function getAllowedMethods(Route $route): string
     {
-        if ($route->getAllowedMethods() === RequestMethod::ANY) {
+        if ($route->getAllowedMethods() === Method::ANY) {
             return '*';
         }
 
@@ -168,11 +172,11 @@ final class RouteListCommand extends AbstractCommand
 
         switch (true) {
             // TODO : virer ce case qui ne sert à rien et ajouter un case pour la classe "Callback"
-            case $handler instanceof Callback:
+            case $handler instanceof CallableHandler:
                 // TODO : à coder !!!!!
                 return 'Callback()';
             /*
-                $reflection = new ReflectionFunction($handler);
+                $reflection = new \ReflectionFunction($handler);
                 return sprintf(
                     'Closure(%s:%s)',
                     basename($reflection->getFileName()),
@@ -214,6 +218,7 @@ final class RouteListCommand extends AbstractCommand
      *
      * @return mixed
      */
+    //https://github.com/nette/web-addons.nette.org/blob/e985a240f30d2d4314f97cb2fa9699476d0c0a68/tests/libs/Access/Property.php
     private function getValue(object $object, string $property)
     {
         $r = new ReflectionObject($object);

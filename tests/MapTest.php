@@ -4,30 +4,31 @@ declare(strict_types=1);
 
 namespace Chiron\Routing\Tests;
 
-use Chiron\Routing\RouteCollection;
-use Chiron\Routing\Route;
-use PHPUnit\Framework\TestCase;
+use ArrayIterator;
 use Chiron\Container\Container;
-use Chiron\Http\Http;
 use Chiron\Http\Message\RequestMethod as Method;
 use Chiron\Http\Message\StatusCode as Status;
 use Chiron\Routing\Exception\RouteNotFoundException;
-use ArrayIterator;
+use Chiron\Routing\Exception\RouterException;
+use Chiron\Routing\Route;
+use Chiron\Routing\Map;
+use Chiron\Views\Engine\PhpRenderer;
+use Chiron\Views\TemplateRendererInterface;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use Nyholm\Psr7\Uri;
-use Chiron\Views\TemplateRendererInterface;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Chiron\Views\Engine\PhpRenderer;
-use Chiron\Routing\Exception\RouterException;
 
-class RouteCollectionTest extends TestCase
+// TODO : créer une méthode createMap() avec en possibilité de paramétre un container (si il est null par défault on fait un new Container()) et un basepath par défaut à null, ca évitera d'avoir X fois un new Map() dans cette classe de tests !!!!
+
+class MapTest extends TestCase
 {
     public function testPrefixEmpty()
     {
-        $collection = new RouteCollection(new Container(), '');
+        $collection = new Map('');
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar');
 
@@ -36,7 +37,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPrefixSlash()
     {
-        $collection = new RouteCollection(new Container(), '/');
+        $collection = new Map('/');
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar');
 
@@ -45,7 +47,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPrefixUsingMapFunction()
     {
-        $collection = new RouteCollection(new Container(), '/basepath');
+        $collection = new Map('/basepath');
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar');
 
@@ -54,7 +57,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPrefixUsingAddRouteFunction()
     {
-        $collection = new RouteCollection(new Container(), '/basepath');
+        $collection = new Map('/basepath');
+        $collection->setContainer(new Container());
         $route = new Route('/foobar');
 
         $collection->addRoute($route);
@@ -64,7 +68,8 @@ class RouteCollectionTest extends TestCase
 
     public function testGetFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->get('/foobar');
 
@@ -74,7 +79,8 @@ class RouteCollectionTest extends TestCase
 
     public function testHeadFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->head('/foobar');
 
@@ -84,7 +90,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPostFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->post('/foobar');
 
@@ -94,7 +101,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPutFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->put('/foobar');
 
@@ -104,7 +112,8 @@ class RouteCollectionTest extends TestCase
 
     public function testDeleteFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->delete('/foobar');
 
@@ -114,7 +123,8 @@ class RouteCollectionTest extends TestCase
 
     public function testOptionsFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->options('/foobar');
 
@@ -124,7 +134,8 @@ class RouteCollectionTest extends TestCase
 
     public function testTraceFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->trace('/foobar');
 
@@ -134,7 +145,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPatchFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->patch('/foobar');
 
@@ -144,7 +156,8 @@ class RouteCollectionTest extends TestCase
 
     public function testAnyFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->any('/foobar');
 
@@ -154,7 +167,8 @@ class RouteCollectionTest extends TestCase
 
     public function testMapFunction()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar');
 
@@ -165,7 +179,8 @@ class RouteCollectionTest extends TestCase
     public function testAddRouteInjectContainer()
     {
         $container = new Container();
-        $collection = new RouteCollection($container);
+        $collection = new Map();
+        $collection->setContainer($container);
         $route = new Route('/foobar');
 
         $this->assertFalse($route->hasContainer());
@@ -178,7 +193,8 @@ class RouteCollectionTest extends TestCase
     public function testMapInjectContainer()
     {
         $container = new Container();
-        $collection = new RouteCollection($container);
+        $collection = new Map();
+        $collection->setContainer($container);
 
         $route = $collection->map('/foobar');
 
@@ -187,7 +203,8 @@ class RouteCollectionTest extends TestCase
 
     public function testPermanentRedirectThrowException()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
         $bad_uri = 123;
 
         $this->expectException(RouterException::class);
@@ -198,7 +215,8 @@ class RouteCollectionTest extends TestCase
 
     public function testRedirectThrowException()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
         $bad_uri = 123;
 
         $this->expectException(RouterException::class);
@@ -209,7 +227,8 @@ class RouteCollectionTest extends TestCase
 
     public function testViewThrowException()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
         $bad_uri = 123;
 
         $this->expectException(RouterException::class);
@@ -226,7 +245,8 @@ class RouteCollectionTest extends TestCase
         $container = new Container();
         $container->bind(ResponseFactoryInterface::class, Psr17Factory::class);
 
-        $collection = new RouteCollection($container);
+        $collection = new Map();
+        $collection->setContainer($container);
 
         $route = $collection->permanentRedirect($uri, '/foobar');
 
@@ -246,7 +266,8 @@ class RouteCollectionTest extends TestCase
         $container = new Container();
         $container->bind(ResponseFactoryInterface::class, Psr17Factory::class);
 
-        $collection = new RouteCollection($container);
+        $collection = new Map();
+        $collection->setContainer($container);
 
         $route = $collection->redirect($uri, '/foobar');
 
@@ -270,7 +291,8 @@ class RouteCollectionTest extends TestCase
         $renderer->addPath(__DIR__ . '/Fixtures');
         $container->bind(TemplateRendererInterface::class, $renderer);
 
-        $collection = new RouteCollection($container);
+        $collection = new Map();
+        $collection->setContainer($container);
 
         $route = $collection->view($uri, 'my_view_template', ['name' => 'Foobar']);
 
@@ -293,7 +315,8 @@ class RouteCollectionTest extends TestCase
 
     public function testGroups(): void
     {
-        $r = new RouteCollection(new Container());
+        $r = new Map();
+        $r->setContainer(new Container());
 
         $r->delete('/delete');
         $r->get('/get');
@@ -303,7 +326,7 @@ class RouteCollectionTest extends TestCase
         $r->put('/put');
         $r->options('/options');
 
-        $r->group('/group-one', static function (RouteCollection $r): void {
+        $r->group('/group-one', static function (Map $r): void {
             $r->delete('/delete');
             $r->get('/get');
             $r->head('/head');
@@ -312,7 +335,7 @@ class RouteCollectionTest extends TestCase
             $r->put('/put');
             $r->options('/options');
 
-            $r->group('/group-two', static function (RouteCollection $r): void {
+            $r->group('/group-two', static function (Map $r): void {
                 $r->delete('/delete');
                 $r->get('/get');
                 $r->head('/head');
@@ -323,18 +346,18 @@ class RouteCollectionTest extends TestCase
             });
         });
 
-        $r->group('/admin', static function (RouteCollection $r): void {
+        $r->group('/admin', static function (Map $r): void {
             $r->get('-some-info');
         });
-        $r->group('/admin-', static function (RouteCollection $r): void {
+        $r->group('/admin-', static function (Map $r): void {
             $r->get('more-info');
         });
 
-        $r->group('/slash/', static function (RouteCollection $r): void {
+        $r->group('/slash/', static function (Map $r): void {
             $r->get('/slash/');
         });
 
-        $r->group('/slash', static function (RouteCollection $r): void {
+        $r->group('/slash', static function (Map $r): void {
             $r->get('slash');
         });
 
@@ -374,7 +397,8 @@ class RouteCollectionTest extends TestCase
 
     public function testGetRoute()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar')->name('foo');
 
@@ -383,7 +407,8 @@ class RouteCollectionTest extends TestCase
 
     public function testGetRouteThrowException()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $route = $collection->map('/foobar')->name('foo');
 
@@ -395,7 +420,8 @@ class RouteCollectionTest extends TestCase
 
     public function testhasRoute()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $this->assertFalse($collection->hasRoute('foo'));
 
@@ -406,7 +432,8 @@ class RouteCollectionTest extends TestCase
 
     public function testGetRoutes()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $this->assertSame([], $collection->getRoutes());
 
@@ -417,7 +444,8 @@ class RouteCollectionTest extends TestCase
 
     public function testIterator()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $this->assertInstanceOf(ArrayIterator::class, $collection->getIterator());
         $this->assertSame([], $collection->getIterator()->getArrayCopy());
@@ -429,7 +457,8 @@ class RouteCollectionTest extends TestCase
 
     public function testCount()
     {
-        $collection = new RouteCollection(new Container());
+        $collection = new Map();
+        $collection->setContainer(new Container());
 
         $this->assertCount(0, $collection);
 

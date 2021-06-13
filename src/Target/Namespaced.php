@@ -64,6 +64,7 @@ final class Namespaced extends CallableHandler implements TargetInterface
     /**
      * Converts a word into the format for a Doctrine class name. Converts 'table_name' to 'TableName'.
      */
+    // TODO : déporter cette méthode dans la classe Support\Str::class et renommer la méthode en studly()    https://github.com/illuminate/support/blob/master/Str.php#L744
     private function classify(string $word): string
     {
         return str_replace([' ', '_', '-'], '', ucwords($word, ' _-'));

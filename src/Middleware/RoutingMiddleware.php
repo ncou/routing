@@ -13,7 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class RoutingMiddleware implements MiddlewareInterface
+final class RoutingMiddleware implements MiddlewareInterface
 {
     /** @var UrlMatcherInterface */
     private $matcher;

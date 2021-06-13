@@ -8,12 +8,12 @@ use Chiron\Container\BindingInterface;
 use Chiron\Container\Container;
 use Chiron\Core\Container\Provider\ServiceProviderInterface;
 use Chiron\Core\Exception\ScopeException;
-use Chiron\Routing\Route;
+use Chiron\Http\Config\HttpConfig;
 use Chiron\Routing\MatchingResult;
+use Chiron\Routing\Route;
+use Chiron\Routing\Map;
 use Closure;
 use Psr\Http\Message\ServerRequestInterface;
-use Chiron\Http\Config\HttpConfig;
-use Chiron\Routing\RouteCollection;
 
 /**
  * Chiron Routing services provider.
@@ -31,7 +31,7 @@ class RoutingServiceProvider implements ServiceProviderInterface
         $binder->bind(MatchingResult::class, Closure::fromCallable([$this, 'matchingResult']));
         $binder->bind(Route::class, Closure::fromCallable([$this, 'route'])); // TODO : utilité du truc ? on devrait plutot récupérer l'objet MatchingResult et retourner la route via la méthode ->getMatchedRoute();
         // This should be a singleton, because the route collection could be updated during app bootloading.
-        $binder->singleton(RouteCollection::class, Closure::fromCallable([$this, 'routeCollection']));
+        $binder->singleton(Map::class, Closure::fromCallable([$this, 'map']));
     }
 
     /**
@@ -71,13 +71,13 @@ class RoutingServiceProvider implements ServiceProviderInterface
     }
 
     /**
-     * @param Container $container
+     * @param Container  $container
      * @param HttpConfig $config
      *
-     * @return RouteCollection
+     * @return Map
      */
-    private function routeCollection(Container $container, HttpConfig $config): RouteCollection
+    private function map(HttpConfig $config): Map
     {
-        return new RouteCollection($container, $config->getBasePath());
+        return new Map($config->getBasePath());
     }
 }

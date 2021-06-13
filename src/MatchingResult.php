@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Chiron\Routing;
 
-use Chiron\Http\Message\RequestMethod;
+use Chiron\Http\Message\RequestMethod as Method;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -119,7 +119,7 @@ final class MatchingResult implements RequestHandlerInterface
      */
     public function isMethodFailure(): bool
     {
-        return $this->isFailure() && $this->allowedMethods !== RequestMethod::ANY;
+        return $this->isFailure() && $this->allowedMethods !== Method::ANY;
     }
 
     /**

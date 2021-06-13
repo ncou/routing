@@ -110,7 +110,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
         return self::map($pattern, Method::ANY);
     }
 
-    // TODO : harmoniser la signature de la méthode avec la classe RouteCollection qui contient aussi une méthode "map()" mais qui n'utilise pas le second paramétre $methods !!!!
+    // TODO : harmoniser la signature de la méthode avec la classe Map qui contient aussi une méthode "map()" mais qui n'utilise pas le second paramétre $methods !!!!
     public static function map(string $pattern, array $methods): self
     {
         $route = new static($pattern);
@@ -436,6 +436,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
     // TODO : renommer cette méthode en setMethods()
     public function setAllowedMethods(array $methods): self
     {
+        // TODO : reporter ce test&throw dans la méthode Method::validateHttpMethods() !!!!
         if (empty($methods)) {
             // TODO : lever une RouteException
             throw new InvalidArgumentException(
@@ -443,7 +444,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
             );
         }
 
-        $this->methods = Method::validateHttpMethods($methods);
+        $this->methods = Method::validateHttpMethods($methods); // TODO : faire un try/catch et convertir l'exception en une RouteException !!!!
 
         return $this;
     }
@@ -663,7 +664,8 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // This case shoudn't really happen because the container is injectected via 'RouteCollection::addRoute()'.
+        // TODO : virer cette vérifications supperflue ????
+        // This case shoudn't really happen because the container is injectected via 'Map::addRoute()'.
         if (! $this->hasContainer()) {
             throw new RouteException('Unable to configure route pipeline without associated container.');
         }

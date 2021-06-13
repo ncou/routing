@@ -6,17 +6,18 @@ namespace Chiron\Routing;
 
 use ArrayIterator;
 use Chiron\Container\Container;
-use Chiron\Container\SingletonInterface;
+use Chiron\Http\Message\RequestMethod as Method;
+use Chiron\Http\Message\StatusCode as Status;
 use Chiron\Routing\Controller\RedirectController;
 use Chiron\Routing\Controller\ViewController;
 use Chiron\Routing\Exception\RouteNotFoundException;
 use Chiron\Routing\Exception\RouterException;
 use Countable;
 use IteratorAggregate;
-use Psr\Http\Server\RequestHandlerInterface;
-use Chiron\Http\Message\RequestMethod as Method;
-use Chiron\Http\Message\StatusCode as Status;
 use Psr\Http\Message\UriInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Chiron\Container\ContainerAwareInterface;
+use Chiron\Container\ContainerAwareTrait;
 
 // HEAD Support :
 // https://github.com/atanvarno69/router
@@ -74,22 +75,25 @@ use Psr\Http\Message\UriInterface;
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
  */
-final class RouteCollection implements Countable, IteratorAggregate
+// TODO : renommer la classe en RouteCollector + virer les interfaces Coutable et IteratorAggregate car cela ne sert à rien et la méthode ->get() sera pas clair pour l'utilisateur si il itére sur cette collection il pensera que la méthode get() sert à récurérer un élément de cette collection alors que ce n'est pas le cas [car créé une route] !!!!
+// TODO : renommer la classe en "Map" comme dans Aura.Router et utiliser un "protoclasse" qui permet d'avoir un template de classe à utiliser. regarder ce que fait AuraRouter !!!!
+
+// TODO : attention il faudrait gérer les doublons sur le nom des routes !!!! et lever une exception du type RouteAlreadyExistsException ou DuplicateRouteException si c'est le cas !!!
+// Exemple : https://github.com/zendframework/zend-expressive-router/blob/master/src/RouteCollector.php#L149
+final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
 {
-    /** @var Route[] List of all routes registered directly with the application. */
+    use ContainerAwareTrait;
+
+    /** @var Route[] An array of all route objects registered. */
     private $routes = [];
-    /** @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host) */
+    /** @var string Can be used to ignore leading part of the Request URL (if main file lives in subdirectory of host). */
     private $prefix;
-    /** @var Container */
-    private $container;
 
     /**
-     * @param Container $container
-     * @param string    $basePath Useful if you are running your application from a subdirectory.
+     * @param string    $basePath  Useful if you are running your application from a subdirectory.
      */
-    public function __construct(Container $container, string $basePath = '/')
+    public function __construct(string $basePath = '/')
     {
-        $this->container = $container;
         $this->prefix = trim(trim($basePath), '/'); // TODO : il faudrait pas remonter ce bout de code [les différents trim()] directement dans la méthode httpConfig->getBasePath() ????
     }
 
@@ -229,7 +233,7 @@ final class RouteCollection implements Countable, IteratorAggregate
      * Adds a route and returns it for future modification.
      * By default the Route will support all the methods : 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
      *
-     * @param string          $pattern
+     * @param string                  $pattern
      * @param RequestHandlerInterface $handler
      *
      * @return Route
@@ -248,16 +252,18 @@ final class RouteCollection implements Countable, IteratorAggregate
      *
      * @param Route $route
      *
+     * @throws \UnexpectedValueException If the container is not attached to this class.
+     *
      * @return $this
      */
     public function addRoute(Route $route): self
     {
-        // Add the container if not already presents in the Route instance.
+        // Attach a container instance if not already defined for the Route.
         if (! $route->hasContainer()) {
-            $route->setContainer($this->container);
+            $route->setContainer($this->getContainer());
         }
 
-        // Update the route path to append the routecollection prefix.
+        // Update the route path to append the prefix.
         $pattern = '/' . $this->prefix . $route->getPath();
         $route->setPath($pattern);
 
@@ -311,7 +317,7 @@ final class RouteCollection implements Countable, IteratorAggregate
      * @see https://tools.ietf.org/html/rfc7231#section-6.4.2
      *
      * @param UriInterface|string $uri
-     * @param string $destination
+     * @param string              $destination
      *
      * @throws RouterException If the $uri parameter is not valid.
      *
@@ -329,8 +335,8 @@ final class RouteCollection implements Countable, IteratorAggregate
      * @see https://tools.ietf.org/html/rfc7231#section-6.4.3
      *
      * @param UriInterface|string $uri
-     * @param string $destination
-     * @param int    $status
+     * @param string              $destination
+     * @param int                 $status
      *
      * @throws RouterException If the $uri parameter is not valid.
      *
@@ -354,8 +360,8 @@ final class RouteCollection implements Countable, IteratorAggregate
      * Register a new route that returns a view.
      *
      * @param UriInterface|string $uri
-     * @param string $template
-     * @param array  $parameters
+     * @param string              $template
+     * @param array               $parameters
      *
      * @throws RouterException If the $uri parameter is not valid.
      *
@@ -402,6 +408,16 @@ final class RouteCollection implements Countable, IteratorAggregate
     public function getRoutes(): array
     {
         return $this->routes;
+    }
+
+    /**
+     * Is the route collection empty ?
+     *
+     * @return bool
+     */
+    public function isEmpty(): bool
+    {
+        return $this->routes === [];
     }
 
     /**
