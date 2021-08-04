@@ -19,6 +19,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Chiron\Container\ContainerAwareInterface;
 use Chiron\Container\ContainerAwareTrait;
 
+use Chiron\Event\EventDispatcherAwareInterface;
+use Chiron\Event\EventDispatcherAwareTrait;
+
 // HEAD Support :
 // https://github.com/atanvarno69/router
 // https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/FastRouteDispatcher.php#L36
@@ -80,9 +83,11 @@ use Chiron\Container\ContainerAwareTrait;
 
 // TODO : attention il faudrait gérer les doublons sur le nom des routes !!!! et lever une exception du type RouteAlreadyExistsException ou DuplicateRouteException si c'est le cas !!!
 // Exemple : https://github.com/zendframework/zend-expressive-router/blob/master/src/RouteCollector.php#L149
-final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
+
+// TODO : renommer la méthode map() en route() et il faudra se poser la question si dans la classe Route on conserve la méthode map() ou si il faut la renommer (eventuellement en method() ?????). Idéalement il faudrait pouvoir utiliser le même nom pour ces 2 fonctions que l'utilisateur puisse s'y retrouver !!! (pour l'instant il peut faire un Map->map(XXXX) ou un Map->addRoute(Route::map(XXXX)))
+final class Map implements Countable, IteratorAggregate, ContainerAwareInterface, EventDispatcherAwareInterface
 {
-    use ContainerAwareTrait;
+    use ContainerAwareTrait, EventDispatcherAwareTrait;
 
     /** @var Route[] An array of all route objects registered. */
     private $routes = [];
@@ -109,7 +114,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function get(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::GET);
+        return $this->route($pattern)->method(Method::GET);
     }
 
     /**
@@ -124,7 +129,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function head(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::HEAD);
+        return $this->route($pattern)->method(Method::HEAD);
     }
 
     /**
@@ -139,7 +144,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function post(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::POST);
+        return $this->route($pattern)->method(Method::POST);
     }
 
     /**
@@ -154,7 +159,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function put(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::PUT);
+        return $this->route($pattern)->method(Method::PUT);
     }
 
     /**
@@ -169,7 +174,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function delete(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::DELETE);
+        return $this->route($pattern)->method(Method::DELETE);
     }
 
     /**
@@ -184,7 +189,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function options(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::OPTIONS);
+        return $this->route($pattern)->method(Method::OPTIONS);
     }
 
     /**
@@ -199,7 +204,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function trace(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::TRACE);
+        return $this->route($pattern)->method(Method::TRACE);
     }
 
     /**
@@ -213,7 +218,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function patch(string $pattern): Route
     {
-        return $this->map($pattern)->method(Method::PATCH);
+        return $this->route($pattern)->method(Method::PATCH);
     }
 
     /**
@@ -226,7 +231,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      */
     public function any(string $pattern): Route
     {
-        return $this->map($pattern);
+        return $this->route($pattern);
     }
 
     /**
@@ -238,7 +243,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      *
      * @return Route
      */
-    public function map(string $pattern): Route
+    public function route(string $pattern): Route
     {
         $route = new Route($pattern);
         $this->addRoute($route);
@@ -253,6 +258,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      * @param Route $route
      *
      * @throws \UnexpectedValueException If the container is not attached to this class.
+     * @throws \UnexpectedValueException If the event dispatcher is not attached to this class.
      *
      * @return $this
      */
@@ -261,6 +267,10 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
         // Attach a container instance if not already defined for the Route.
         if (! $route->hasContainer()) {
             $route->setContainer($this->getContainer());
+        }
+        // Attach an event dispatcher instance if not already defined for the Route.
+        if (! $route->hasEventDispatcher()) {
+            $route->setEventDispatcher($this->getEventDispatcher());
         }
 
         // Update the route path to append the prefix.

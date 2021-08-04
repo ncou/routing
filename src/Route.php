@@ -16,6 +16,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+use Chiron\Event\EventDispatcherAwareInterface;
+use Chiron\Event\EventDispatcherAwareTrait;
+
+use Chiron\Routing\Event\RouteMatchedEvent;
+
 //https://github.com/symfony/routing/blob/master/Route.php
 
 // Ajouter les middleware comme des options :    https://github.com/ventoviro/windwalker-core/blob/aaf68793043e84c1374bda8065eebdbc347862ac/src/Core/Router/RouteConfigureTrait.php#L272
@@ -24,10 +29,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 // et le bout de code pour récupérer les extra : https://github.com/ventoviro/windwalker/blob/8b1aba30967dd0e6c4374aec0085783c3d0f88b4/src/Router/Route.php#L515
 
 // TODO : utiliser le point d'interrogation et ?null pour initialiser certaines variables   => https://github.com/yiisoft/router/blob/master/src/Route.php#L19 pour fonctionner en version 7.4 !!!!
-final class Route implements RequestHandlerInterface, ContainerAwareInterface
+final class Route implements RequestHandlerInterface, ContainerAwareInterface, EventDispatcherAwareInterface
 {
-    use ContainerAwareTrait;
-    use PipelineTrait;
+    use PipelineTrait, ContainerAwareTrait, EventDispatcherAwareTrait;
 
     public const ATTRIBUTE = '__Route__';
 
@@ -59,7 +63,6 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
     private $methods = Method::ANY; //['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'];
 
     // TODO : extraire les default et requirements du pattern ??? https://github.com/symfony/routing/blob/5.x/Route.php#L536 (cf méthode extractInlineDefaultsAndRequirements())
-    // TODO : créer une méthode public setPath() qui serait appellée dans le constructeur ??? cela permet de modifier plus tard le path je suppose !!!!
     public function __construct(string $pattern)
     {
         $this->setPath($pattern);
@@ -67,51 +70,52 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
 
     public static function get(string $pattern): self
     {
-        return self::map($pattern, [Method::GET]);
+        return self::create($pattern, [Method::GET]);
     }
 
     public static function post(string $pattern): self
     {
-        return self::map($pattern, [Method::POST]);
+        return self::create($pattern, [Method::POST]);
     }
 
     public static function put(string $pattern): self
     {
-        return self::map($pattern, [Method::PUT]);
+        return self::create($pattern, [Method::PUT]);
     }
 
     public static function delete(string $pattern): self
     {
-        return self::map($pattern, [Method::DELETE]);
+        return self::create($pattern, [Method::DELETE]);
     }
 
     public static function patch(string $pattern): self
     {
-        return self::map($pattern, [Method::PATCH]);
+        return self::create($pattern, [Method::PATCH]);
     }
 
     public static function head(string $pattern): self
     {
-        return self::map($pattern, [Method::HEAD]);
+        return self::create($pattern, [Method::HEAD]);
     }
 
     public static function options(string $pattern): self
     {
-        return self::map($pattern, [Method::OPTIONS]);
+        return self::create($pattern, [Method::OPTIONS]);
     }
 
     public static function trace(string $pattern): self
     {
-        return self::map($pattern, [Method::TRACE]);
+        return self::create($pattern, [Method::TRACE]);
     }
 
     public static function any(string $pattern): self
     {
-        return self::map($pattern, Method::ANY);
+        return self::create($pattern, Method::ANY);
     }
 
     // TODO : harmoniser la signature de la méthode avec la classe Map qui contient aussi une méthode "map()" mais qui n'utilise pas le second paramétre $methods !!!!
-    public static function map(string $pattern, array $methods): self
+    // TODO : eventuellement méthode à passer en private et renommer en create(), car elle n'a pas vraiment d'utilité à être public car on peut utiliser le constructeur (en faisant un new Route). Eventuellement rajouter dans le constructeur le paramétre array $methods (initialisé par défaut à Method::ANY) si besoin !!!
+    private static function create(string $pattern, array $methods): self
     {
         $route = new static($pattern);
         $route->setAllowedMethods($methods);
@@ -127,29 +131,38 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
      * @return Route
      */
     // TODO : gérer le cas ou l'utilisateur n'appel pas cette méthode et donc que le $this->handler est null, car on aura un typeerror quand on va récupérer la valeur via le getteur getHandler() qui doit retourner un objet de type ServerRequestHandlerInterface !!!!!!!!!!!!
+    // TODO : ajouter le typehint pour la phpdoc.
+    // TODO : attention ca va casser la commande RouteListCommand si on ne résoue pas le target en live, car dans ce cas le $this->handler ne sera pas initialisé !!!!
     public function to($target): self
-    {
-        $this->target = $target;
-
-        // Resolve the handler if the container is presents, else the resolution will be done later.
-        if ($this->hasContainer()) {
-            $this->prepareHandler($target);
-        }
-
-        return $this;
-    }
-
-    private function prepareHandler($target): void
     {
         $handler = $this->resolveHandler($target);
 
         // TODO : on devrait pas plutot déporter ce bout de code dans la classe UrlMatcher lorsqu'on inject les routes ? car je pense qu'il y a un risque que l'ajout de valeurs par default ou de requirements ne perturbent la génération du lien pour l'url lorsqu'on utilisera la classe UrlGenerator.
+        // TODO : eventuellement déplacer ce bout de code dans un listener sur l'événement RouteMatchedEvent !!!!!
         if ($handler instanceof TargetInterface) {
             $this->addDefaults($handler->getDefaults());
             $this->addRequirements($handler->getRequirements());
         }
 
         $this->handler = $handler;
+
+        return $this;
+    }
+
+    /**
+     * Add a middleware to the end of the stack.
+     *
+     * @param string|MiddlewareInterface or an array of such arguments $middlewares
+     *
+     * @return $this
+     */
+    // TODO : gérer aussi les tableaux de middleware, ainsi que les tableaux de tableaux de middlewares
+    // TODO : il faudrait pas ajouter un mécanisme pour éviter les doublons lorsqu'on ajoute un middleware ???? en vérifiant le get_class par exemple.
+    public function middleware($middleware): self
+    {
+        $this->middlewares[] = $this->resolveMiddleware($middleware);
+
+        return $this;
     }
 
     /**
@@ -167,6 +180,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @return $this
      */
+    // TODO : vérifier l'utilité d'avoir cette méthode, car on a peu de chances de changer le path une fois que la route est créée. Initialiser le path dans le constructeur est suffisant, non ????
     public function setPath(string $pattern): self
     {
         // A pattern must start with a slash and must not have multiple slashes at the beginning because the
@@ -460,7 +474,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
     /**
      * Proxy method for "setAllowedMethods()".
      *
-     * @param string|array ...$middleware
+     * @param string|array ...$methods
      */
     public function method(...$methods): self
     {
@@ -606,53 +620,6 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
     }
 
     /**
-     * Add a middleware to the end of the stack.
-     *
-     * @param string|MiddlewareInterface or an array of such arguments $middlewares
-     *
-     * @return $this
-     */
-    // TODO : gérer aussi les tableaux de middleware, ainsi que les tableaux de tableaux de middlewares
-    // TODO : il faudrait pas ajouter un mécanisme pour éviter les doublons lorsqu'on ajoute un middleware ???? en vérifiant le get_class par exemple.
-    public function middleware($middleware): self
-    {
-        // Resolve the middleware if the container is presents, else the resolution will be done later.
-        if ($this->hasContainer()) {
-            $middleware = $this->resolveMiddleware($middleware);
-        }
-
-        $this->middlewares[] = $middleware;
-
-        return $this;
-    }
-
-    /**
-     * Extend the setContainer() function defined in the ContianerAwareTrait.
-     * We resolve the middleware stack and the handler using the container (if it's a string).
-     * If the resolution throw an exception it will be shown during the bootloading !
-     *
-     * @param Container $container
-     *
-     * @return $this
-     */
-    public function setContainer(Container $container): ContainerAwareInterface
-    {
-        $this->container = $container;
-
-        // Resolve the middlewares already added, exception is thrown on resolution fail.
-        foreach ($this->middlewares as &$middleware) {
-            $middleware = $this->resolveMiddleware($middleware);
-        }
-
-        // Resolve the handler only if already set, exception is thrown on resolution fail.
-        if ($this->target !== null) {
-            $this->prepareHandler($this->target);
-        }
-
-        return $this;
-    }
-
-    /**
      * Execute the route using a pipeline (send request throw middlewares and final handler).
      *
      * Add the the route attribute to the request in case user need it in final handler.
@@ -662,13 +629,18 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface
      *
      * @return ResponseInterface
      */
+    // TODO : lever un RouteMatchedEvent :
+    //https://github.com/laravel/framework/blob/8.x/src/Illuminate/Routing/Events/RouteMatched.php
+    //https://github.com/laravel/framework/blob/574aaece57561e4258d5f9ab4275009d4355180a/src/Illuminate/Routing/Router.php#L669
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         // TODO : virer cette vérifications supperflue ????
         // This case shoudn't really happen because the container is injectected via 'Map::addRoute()'.
         if (! $this->hasContainer()) {
-            throw new RouteException('Unable to configure route pipeline without associated container.');
+            throw new RouteException('Unable to configure route pipeline without associated container.'); // TODO : utiliser un RoutingExcetion !!!!
         }
+
+        $this->getEventDispatcher()->dispatch(new RouteMatchedEvent($this, $request));
 
         // Store the Route default attribute values in the Request attributes (only if not already presents).
         foreach ($this->defaults as $parameter => $value) {

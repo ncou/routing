@@ -19,6 +19,9 @@ use ReflectionObject;
 //https://github.com/spiral/framework/blob/d17c175e85165456fbd2d841c8e81165e371675c/src/Framework/Command/Router/ListCommand.php
 //https://github.com/spiral/framework/blob/d17c175e85165456fbd2d841c8e81165e371675c/tests/Framework/Framework/RouteListTest.php
 
+//https://github.com/guiwoda/laravel-framework/blob/master/src/Illuminate/Foundation/Console/RouteListCommand.php
+//https://github.com/appzcoder/lumen-route-list/blob/1.0/src/RoutesCommand.php
+
 //https://github.com/top-think/framework/blob/6.0/src/think/console/command/RouteList.php
 
 final class RouteListCommand extends AbstractCommand
@@ -170,6 +173,8 @@ final class RouteListCommand extends AbstractCommand
     {
         $handler = $this->getValue($route, 'handler');
 
+        // TODO : attention je pense qu'on ne va rien afficher si on a un objet de type "RequestHandlerInterface" car il n'y a pas de "case" dans ce "switch" !!!!
+        // TODO : je pense qu'on peut ajouter un méthode getDetails() ou getDescription() ou __debugInfo() dans les classes CallableHandler/Action/Controller/Group/Namespaced pour afficher les infos qui sont calculées dans ce switch ca évitera de faire de la reflection sur ces classes !!!!
         switch (true) {
             // TODO : virer ce case qui ne sert à rien et ajouter un case pour la classe "Callback"
             case $handler instanceof CallableHandler:
