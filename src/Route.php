@@ -21,6 +21,8 @@ use Chiron\Event\EventDispatcherAwareTrait;
 
 use Chiron\Routing\Event\RouteMatchedEvent;
 
+// TODO : Extract name for route : https://github.com/getsentry/sentry-laravel/blob/5e869deaef12da8a626ee2b0aa1b4bf15869a6cc/src/Sentry/Laravel/Integration.php#L126
+
 //https://github.com/symfony/routing/blob/master/Route.php
 
 // Ajouter les middleware comme des options :    https://github.com/ventoviro/windwalker-core/blob/aaf68793043e84c1374bda8065eebdbc347862ac/src/Core/Router/RouteConfigureTrait.php#L272

@@ -152,6 +152,7 @@ final class RouteListCommand extends AbstractCommand
             $pattern
         );*/
 
+        // TODO : ajouter la regex comme une constante privée de la classe !!!!
         // TODO : attention dans le cas du router Aura.Router le séparateur des expression n'est pas '{xxx}' mais '<xxx>' on aura un probléme !!!!
         return preg_replace_callback(
             '/{([^}]*)}/',

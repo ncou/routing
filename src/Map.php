@@ -97,6 +97,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
     /**
      * @param string    $basePath  Useful if you are running your application from a subdirectory.
      */
+    // TODO : faire plutot un string $basePath = '' car le '/' ne sert à rien !!!!
     public function __construct(string $basePath = '/')
     {
         $this->prefix = trim(trim($basePath), '/'); // TODO : il faudrait pas remonter ce bout de code [les différents trim()] directement dans la méthode httpConfig->getBasePath() ????
@@ -274,7 +275,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
         }
 
         // Update the route path to append the prefix.
-        $pattern = '/' . $this->prefix . $route->getPath();
+        $pattern = '/' . $this->prefix . $route->getPath(); // TODO : virer le '/' qui ne semble servir à rien car on le rajoute lors du setPath() dans la classe Route.
         $route->setPath($pattern);
 
         $this->routes[] = $route;

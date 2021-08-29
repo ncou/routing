@@ -35,6 +35,6 @@ final class RedirectController
     {
         $response = $this->factory->createResponse($status);
 
-        return $response->withHeader('Location', $destination);
+        return $response->withHeader('Location', $destination); // TODO : utiliser une classe de constantes !!!
     }
 }
