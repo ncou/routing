@@ -52,9 +52,6 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
     /** @var string */
     private $path;
 
-    // TODO : ajouter la phpDoc !!!
-    private $target;
-
     /**
      * List of supported HTTP methods for this route (GET, POST etc.).
      *
@@ -126,9 +123,9 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
     }
 
     /**
-     * Speicifes a handler that should be invoked for a matching route.
+     * Specifes a handler that should be invoked for a matching route.
      *
-     * @param RequestHandlerInterface $handler the handler could also be a TargetInterface (it implements the RequestHandlerInterface)
+     * @param mixed $handler
      *
      * @return Route
      */
@@ -150,6 +147,17 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
 
         return $this;
     }
+
+    /**
+     * Return the defined handler for the route. The value could be null.
+     *
+     * @return null|RequestHandlerInterface
+     */
+    /*
+    public function getHandler(): ?RequestHandlerInterface
+    {
+        return $this->handler;
+    }*/
 
     /**
      * Add a middleware to the end of the stack.
@@ -478,6 +486,7 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
      *
      * @param string|array ...$methods
      */
+    // TODO : vérifier si en php8 le variadic est plus simple d'utilisation => https://github.com/illuminate/routing/blob/master/Route.php#L868
     public function method(...$methods): self
     {
         //$methods = is_array($methods[0]) ? $methods[0] : $methods;

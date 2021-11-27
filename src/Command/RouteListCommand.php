@@ -24,6 +24,8 @@ use ReflectionObject;
 
 //https://github.com/top-think/framework/blob/6.0/src/think/console/command/RouteList.php
 
+//https://github.com/symfony/http-kernel/blob/409eba7fa9eccaeb419bd2f35edc9c81fb56323f/DataCollector/RequestDataCollector.php#L440
+
 final class RouteListCommand extends AbstractCommand
 {
     protected static $defaultName = 'route:list';
@@ -172,12 +174,16 @@ final class RouteListCommand extends AbstractCommand
      */
     private function getHandler(Route $route): string
     {
+        //https://github.com/symfony/http-kernel/blob/409eba7fa9eccaeb419bd2f35edc9c81fb56323f/DataCollector/RequestDataCollector.php#L440
         $handler = $this->getValue($route, 'handler');
 
         // TODO : attention je pense qu'on ne va rien afficher si on a un objet de type "RequestHandlerInterface" car il n'y a pas de "case" dans ce "switch" !!!!
-        // TODO : je pense qu'on peut ajouter un méthode getDetails() ou getDescription() ou __debugInfo() dans les classes CallableHandler/Action/Controller/Group/Namespaced pour afficher les infos qui sont calculées dans ce switch ca évitera de faire de la reflection sur ces classes !!!!
+        // TODO : je pense qu'on peut ajouter une méthode getDetails() ou getDescription() ou __debugInfo() dans les classes CallableHandler/Action/Controller/Group/Namespaced pour afficher les infos qui sont calculées dans ce switch ca évitera de faire de la reflection sur ces classes !!!!
+        // TODO : attention il faudrait gerer un case default car l'utilisateur a trés bien pu créer sa propre classe d'action qui implements ActionInterface::class et dans ce cas il faut pouvoir afficher une information !!!!
+        // TODO : on peut aussi lui passer un RequestHandlerInterface comme handler dans la route donc il faudrait pouvoir aussi gérer ce cas dans le switch ci dessous !!!!!
         switch (true) {
             // TODO : virer ce case qui ne sert à rien et ajouter un case pour la classe "Callback"
+            // TODO : attention car comme les classes Action::class/Controller/Group/NameSpace font un extend de CallableHandler on risque de toujours passer dans ce premier "case" et donc ne pas avoir la description des autres classe dans les "case" juste aprés. donc il faudrait mettre le premier case tout à fait à la fin !!!!
             case $handler instanceof CallableHandler:
                 // TODO : à coder !!!!!
                 return 'Callback()';
@@ -225,6 +231,7 @@ final class RouteListCommand extends AbstractCommand
      * @return mixed
      */
     //https://github.com/nette/web-addons.nette.org/blob/e985a240f30d2d4314f97cb2fa9699476d0c0a68/tests/libs/Access/Property.php
+    // TODO : renommer la méthode en getPropertyValue() ou getProperty()
     private function getValue(object $object, string $property)
     {
         $r = new ReflectionObject($object);

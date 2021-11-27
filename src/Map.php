@@ -22,6 +22,8 @@ use Chiron\Container\ContainerAwareTrait;
 use Chiron\Event\EventDispatcherAwareInterface;
 use Chiron\Event\EventDispatcherAwareTrait;
 
+use Chiron\Routing\Event\RouteAddedEvent;
+
 // HEAD Support :
 // https://github.com/atanvarno69/router
 // https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/FastRouteDispatcher.php#L36
@@ -277,6 +279,9 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
         // Update the route path to append the prefix.
         $pattern = '/' . $this->prefix . $route->getPath(); // TODO : virer le '/' qui ne semble servir à rien car on le rajoute lors du setPath() dans la classe Route.
         $route->setPath($pattern);
+
+        // This event allow to change route defaults or requirements for example.
+        //$this->getEventDispatcher()->dispatch(new RouteAddedEvent($route));
 
         $this->routes[] = $route;
 
