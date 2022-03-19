@@ -13,11 +13,11 @@ final class ViewController
     /**
      * @var TemplateRendererInterface
      */
-    private $renderer;
+    private TemplateRendererInterface $renderer;
     /**
      * @var ResponseFactoryInterface
      */
-    private $factory;
+    private ResponseFactoryInterface $factory;
 
     /**
      * @param ResponseFactoryInterface  $factory
@@ -46,7 +46,7 @@ final class ViewController
         // TODO : vérifier si il n'y a pas déjà un header content-type avant d'ajouter celui là. https://github.com/zendframework/zend-diactoros/blob/master/src/Response/InjectContentTypeTrait.php  +   https://github.com/zendframework/zend-diactoros/blob/master/src/Response/HtmlResponse.php#L50
         // https://github.com/laminas/laminas-diactoros/blob/2.5.x/src/Response/InjectContentTypeTrait.php
         // https://github.com/laminas/laminas-diactoros/blob/2.5.x/src/Response/HtmlResponse.php#L51
-        $response = $response->withHeader('Content-Type', 'text/html'); // TODO : utiliser une classe de constantes !!!
+        $response = $response->withHeader('Content-Type', 'text/html'); // TODO : utiliser une classe de constantes HEADERS et MIMES !!!
 
         $response->getBody()->write($content);
 

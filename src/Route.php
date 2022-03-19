@@ -112,8 +112,6 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
         return self::create($pattern, Method::ANY);
     }
 
-    // TODO : harmoniser la signature de la méthode avec la classe Map qui contient aussi une méthode "map()" mais qui n'utilise pas le second paramétre $methods !!!!
-    // TODO : eventuellement méthode à passer en private et renommer en create(), car elle n'a pas vraiment d'utilité à être public car on peut utiliser le constructeur (en faisant un new Route). Eventuellement rajouter dans le constructeur le paramétre array $methods (initialisé par défaut à Method::ANY) si besoin !!!
     private static function create(string $pattern, array $methods): self
     {
         $route = new static($pattern);
@@ -190,7 +188,6 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
      *
      * @return $this
      */
-    // TODO : vérifier l'utilité d'avoir cette méthode, car on a peu de chances de changer le path une fois que la route est créée. Initialiser le path dans le constructeur est suffisant, non ????
     public function setPath(string $pattern): self
     {
         // A pattern must start with a slash and must not have multiple slashes at the beginning because the
@@ -458,10 +455,11 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
      */
     // TODO : filtrer les méthodes cf exemple :       https://github.com/slimphp/Slim-Psr7/blob/master/src/Request.php#L155
     // TODO : renommer cette méthode en setMethods()
+    // TODO : ajouter les throws dans la phpdoc !!!
     public function setAllowedMethods(array $methods): self
     {
         // TODO : reporter ce test&throw dans la méthode Method::validateHttpMethods() !!!!
-        if (empty($methods)) {
+        if ($methods === []) {
             // TODO : lever une RouteException
             throw new InvalidArgumentException(
                 'HTTP methods argument was empty; must contain at least one method'

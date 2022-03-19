@@ -12,7 +12,7 @@ final class RedirectController
     /**
      * @var ResponseFactoryInterface
      */
-    private $factory;
+    private ResponseFactoryInterface $factory;
 
     /**
      * @param ResponseFactoryInterface $factory

@@ -242,16 +242,14 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      * By default the Route will support all the methods : 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
      *
      * @param string                  $pattern
-     * @param RequestHandlerInterface $handler
      *
      * @return Route
      */
     public function route(string $pattern): Route
     {
         $route = new Route($pattern);
-        $this->addRoute($route);
 
-        return $route;
+        return $this->addRoute($route);
     }
 
     /**
@@ -263,9 +261,9 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      * @throws \UnexpectedValueException If the container is not attached to this class.
      * @throws \UnexpectedValueException If the event dispatcher is not attached to this class.
      *
-     * @return $this
+     * @return Route
      */
-    public function addRoute(Route $route): self
+    public function addRoute(Route $route): Route
     {
         // Attach a container instance if not already defined for the Route.
         if (! $route->hasContainer()) {
@@ -285,7 +283,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
 
         $this->routes[] = $route;
 
-        return $this;
+        return $route;
     }
 
     /**
@@ -441,6 +439,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      *
      * @return \ArrayIterator
      */
+    // TODO : réfléchir si on conserve cette méthode car on peut directement accéder au tableau $routes via la méthode getRoutes() !!!
     public function getIterator()
     {
         return new ArrayIterator($this->routes);
@@ -451,6 +450,7 @@ final class Map implements Countable, IteratorAggregate, ContainerAwareInterface
      *
      * @return int
      */
+    // TODO : réfléchir si on conserve cette méthode car on peut directement accéder au tableau $routes via la méthode getRoutes() !!!
     public function count()
     {
         return count($this->routes);
