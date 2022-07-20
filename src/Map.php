@@ -24,6 +24,9 @@ use Chiron\Event\EventDispatcherAwareTrait;
 
 use Chiron\Routing\Event\RouteAddedEvent;
 
+// TODO : lever une exception si une route a déjà le nom qui est utilisé !!!!
+//https://github.com/cakephp/cakephp/blob/4981fcd4de9941174a9e3f4430278f71d2eb81b9/src/Routing/RouteCollection.php#L91
+
 // HEAD Support :
 // https://github.com/atanvarno69/router
 // https://github.com/slimphp/Slim/blob/4.x/Slim/Routing/FastRouteDispatcher.php#L36

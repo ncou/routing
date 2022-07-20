@@ -9,7 +9,9 @@ use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-// TODO : mieux gérer les exceptions dans le cas ou il y a une erreur lors du $injector->call()    exemple :   https://github.com/spiral/framework/blob/e63b9218501ce882e661acac284b7167b79da30a/src/Hmvc/src/AbstractCore.php#L67       +         https://github.com/spiral/framework/blob/master/src/Router/src/CoreHandler.php#L199
+// TODO : mieux gérer les exceptions dans le cas ou il y a une erreur lors du $injector->call()
+//exemple :   https://github.com/spiral/framework/blob/e63b9218501ce882e661acac284b7167b79da30a/src/Hmvc/src/AbstractCore.php#L67
+//+         https://github.com/spiral/framework/blob/master/src/Router/src/CoreHandler.php#L199
 
 
 /**
@@ -35,6 +37,7 @@ final class Action extends CallableHandler implements TargetInterface
     // TODO : initialiser le paramétre $astion avec la valeur par défaut 'index' ????
     public function __construct(string $controller, $action)
     {
+        // TODO : if à virer car on est en php8 donc on peut forcer le paramétre à avoir un typehint égal à "string|array"
         if (! is_string($action) && ! is_array($action)) {
             // TODO : utiliser une classe spécifique style HandlerException ou TargetException ????
             throw new InvalidArgumentException(sprintf(

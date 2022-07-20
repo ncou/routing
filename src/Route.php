@@ -646,11 +646,12 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
         // TODO : virer cette vérifications supperflue ????
         // This case shoudn't really happen because the container is injectected via 'Map::addRoute()'.
         if (! $this->hasContainer()) {
-            throw new RouteException('Unable to configure route pipeline without associated container.'); // TODO : utiliser un RoutingExcetion !!!!
+            throw new RouteException('Unable to configure route pipeline without associated container.'); // TODO : utiliser un RoutingException !!!!
         }
 
         $this->getEventDispatcher()->dispatch(new RouteMatchedEvent($this, $request));
 
+        // TODO : stocker plutot les defaults dans un attribut de la request 'pass' comme fait cakephp : https://github.com/cakephp/cakephp/blob/4981fcd4de9941174a9e3f4430278f71d2eb81b9/src/Routing/Route/Route.php#L486
         // Store the Route default attribute values in the Request attributes (only if not already presents).
         foreach ($this->defaults as $parameter => $value) {
             if ($request->getAttribute($parameter) === null) {
@@ -658,8 +659,11 @@ final class Route implements RequestHandlerInterface, ContainerAwareInterface, E
             }
         }
 
+        // TODO : il faudrait plutot créer un CurrentRoute::class et l'attacher dans la request !!! voir même le binder dans le container !!!!
+        // TODO : attacher une current route dans la request ??? https://github.com/yiisoft/router/blob/4a762f14c9e338e94fc27dd3768b45712409ae4a/src/Middleware/Router.php#L59
+        // TODO : modifier le RoutingServiceProvider pour récupérer la classe CurrentRoute::class via la request stockée dans le container !!!
         // Store the current Route instance in the attributes (used during 'Injector' parameters resolution).
-        $request = $request->withAttribute(static::ATTRIBUTE, $this); // TODO : vérifier l'utilité de ce code !!!
+        $request = $request->withAttribute(static::ATTRIBUTE, $this);
 
         return $this->getPipeline()->handle($request);
     }

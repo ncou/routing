@@ -8,6 +8,8 @@ use Chiron\Routing\Middleware\RoutingMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Chiron\Http\Exception\Client\NotFoundHttpException;
+use Chiron\Http\Exception\Client\MethodNotAllowedHttpException;
 
 final class RouteHandler implements RequestHandlerInterface
 {
@@ -39,10 +41,11 @@ final class RouteHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if (! $this->isRoutingPerformed($request)) {
-            $routingMiddleware = new RoutingMiddleware($this->matcher);
-            $request = $routingMiddleware->performRouting($request);
+            $router = new RoutingMiddleware($this->matcher);
+            $request = $router->performRouting($request);
         }
 
+        /** @var MatchingResult $matching */
         $matching = $request->getAttribute(MatchingResult::ATTRIBUTE);
 
         return $matching->handle($request);

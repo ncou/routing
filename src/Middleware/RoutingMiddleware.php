@@ -12,6 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Chiron\Routing\CurrentRoute;
 
 final class RoutingMiddleware implements MiddlewareInterface
 {
@@ -54,16 +55,33 @@ final class RoutingMiddleware implements MiddlewareInterface
      */
     public function performRouting(ServerRequestInterface $request): ServerRequestInterface
     {
+        // TODO : renommer $matching en $result
         $matching = $this->matcher->match($request);
 
-        // Http 405 Error - Invalid Method
+        // Error - Http 405 Invalid Method.
         if ($matching->isMethodFailure()) {
             throw new MethodNotAllowedHttpException($matching->getAllowedMethods());
         }
-        // Http 404 Error - Not Found
+        // Error - Http 404 Not Found.
         if ($matching->isFailure()) {
             throw new NotFoundHttpException();
         }
+
+        // TODO : code temporaire qu'il faudra améliorer !!!! eventuellement le déplacer dans la classe RouteHandler ???
+        $currentRoute = new CurrentRoute(
+            $request->getUri(),
+            $matching->getMatchedRoute(),
+            $matching->getMatchedParameters()
+        );
+        $request = $request->withAttribute(CurrentRoute::ATTRIBUTE, $currentRoute);
+
+
+        // TODO : attacher une current route dans la request ???
+        // https://github.com/yiisoft/router/blob/4a762f14c9e338e94fc27dd3768b45712409ae4a/src/Middleware/Router.php#L59
+        // https://github.com/yiisoft/router/blob/4a762f14c9e338e94fc27dd3768b45712409ae4a/src/CurrentRoute.php
+        // TODO : modifier le RoutingServiceProvider pour récupérer la classe CurrentRoute::class via la request stockée dans le container !!!
+
+        // TODO : au final ca ne sert à rien de stocker cette classe dans les attributs de la request, il faudrait que dans la classe RouteHandler on utilise l'attribut CurrentRoute::ATTRIBUTE pour détecter si le routing a déjà été fait !!!! + modifier la classe RoutingServiceProvider pour ne pas faire la récupération de la classe MatchingResult dans la request !!!!
 
         // Store the actual route matching result in the request attributes (needed in RouteHandler).
         return $request->withAttribute(MatchingResult::ATTRIBUTE, $matching);

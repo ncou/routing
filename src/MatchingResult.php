@@ -9,6 +9,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+//https://github.com/yiisoft/router/blob/4a762f14c9e338e94fc27dd3768b45712409ae4a/src/MatchingResult.php
+
 //https://github.com/yiisoft/router/blob/master/src/MatchingResult.php
 //https://github.com/yiisoft/router/blob/master/src/Middleware/Router.php#L42
 //TODO : better Marshal function :      https://github.com/yiisoft/router-fastroute/blob/aeb479766daef3e97b61bf1fbbba78a8c0f41330/src/UrlMatcher.php#L257
@@ -145,7 +147,8 @@ final class MatchingResult implements RequestHandlerInterface
  * null if not created via fromRoute(); Route instance otherwise
      */
     // TODO : ne pas avoir cette méthode en public car elle ne sera pas utilisée en dehors de cette classe !!!
-    // TODO : renovyer plutot null si c'est un failure ca sera plus propre d'avoir un return type ?Route plutot que rien du tout !!!!
+    // TODO : renvoyer plutot null si c'est un failure ca sera plus propre d'avoir un return type ?Route plutot que rien du tout !!!!
+    // TODO : c'est possible d'avoir un type de retour à null ???
     public function getMatchedRoute()
     {
         return $this->isFailure() ? false : $this->route;

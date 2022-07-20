@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Chiron\Routing\MatchingResult;
 
+// TODO : méthode à virer !!!! on passera plutot par la classe CurrentRoute pour récupérer les paramétres de la route !!!!
 if (! function_exists('route_parameter')) {
     /**
      * Get a given parameter from the route.
